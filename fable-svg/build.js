@@ -1,0 +1,467 @@
+// node build.js  ->  lab/*.svg
+// Fable's Napkin Lab, SVG edition. Every napkin is one standalone .svg file:
+// geometry written as text, then handed to a "material" (a filter chain) to be ruined nicely.
+'use strict';
+const fs = require('fs'), path = require('path');
+const OUT = path.join(__dirname, 'lab');
+fs.mkdirSync(OUT, { recursive: true });
+
+const W = 800, H = 560, PX = 14, PY = 12, PW = 772, PH = 536;
+const n1 = v => Math.round(v * 10) / 10;
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const sstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function rng(a) {
+  return () => {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const FU = `filterUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}" color-interpolation-filters="sRGB"`;
+const alphaFromR = (k, b) => `values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  ${k} 0 0 0 ${b}"`;
+
+// ------------------------------------------------------------------ materials
+const M = {
+  // a hand: the same geometry, slightly unsure of itself
+  hand: (id, seed = 2, scale = 2.2, freq = 0.03) => `
+  <filter id="${id}" ${FU}>
+    <feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="2" seed="${seed}" result="w"/>
+    <feDisplacementMap in="SourceGraphic" in2="w" scale="${scale}" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>`,
+  // graphite only reaches the peaks of the tooth
+  pencil: (id, seed = 3, k = 2.8, b = -0.8) => `
+  <filter id="${id}" ${FU}>
+    <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="${seed}" result="w"/>
+    <feDisplacementMap in="SourceGraphic" in2="w" scale="2" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="2" seed="${seed + 1}" result="g"/>
+    <feColorMatrix in="g" type="matrix" ${alphaFromR(k, b)} result="gm"/>
+    <feComposite in="d" in2="gm" operator="in"/>
+  </filter>`,
+  // ballpoint: a thin line that starves now and then
+  biro: (id, seed = 5) => `
+  <filter id="${id}" ${FU}>
+    <feTurbulence type="fractalNoise" baseFrequency=".025" numOctaves="2" seed="${seed}" result="w"/>
+    <feDisplacementMap in="SourceGraphic" in2="w" scale="1.6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".09 .5" numOctaves="2" seed="${seed + 1}" result="g"/>
+    <feColorMatrix in="g" type="matrix" ${alphaFromR(4.2, -1.25)} result="gm"/>
+    <feComposite in="d" in2="gm" operator="in"/>
+  </filter>`,
+  // felt-tip: ink creeps into the fibres after the pen has gone
+  felt: (id, seed = 7, scale = 3.5) => `
+  <filter id="${id}" ${FU}>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="${seed}" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="${scale}" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feGaussianBlur in="d" stdDeviation=".8" result="b"/>
+    <feComponentTransfer in="b"><feFuncA type="linear" slope="2.6" intercept="-.5"/></feComponentTransfer>
+  </filter>`,
+  // wax crayon: lumpy, skips the valleys
+  crayon: (id, seed = 9) => `
+  <filter id="${id}" ${FU}>
+    <feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="${seed}" result="w"/>
+    <feDisplacementMap in="SourceGraphic" in2="w" scale="3" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".5" numOctaves="3" seed="${seed + 1}" result="g"/>
+    <feColorMatrix in="g" type="matrix" ${alphaFromR(8, -3.3)} result="gm"/>
+    <feComposite in="d" in2="gm" operator="in"/>
+  </filter>`,
+  // watercolour: wandering edge, pigment pushed to the rim, pooling, granulation
+  wash: (id, seed = 11, o = {}) => {
+    const { scale = 18, freq = 0.02, rim = 5, edge = 0.85, pool = [2.6, -0.75], soft = 1 } = o;
+    return `
+  <filter id="${id}" ${FU}>
+    <feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="4" seed="${seed}" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="${scale}" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="${soft}" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="${rim}" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-${edge}" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="${seed + 3}" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" ${alphaFromR(pool[0], pool[1])} result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="${seed + 5}" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" ${alphaFromR(1.8, -0.05)} result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>`;
+  },
+};
+
+// ------------------------------------------------------------------ signature
+// one path, written once; every napkin runs it through its own material
+const FOLD = 'M1,31 v12 h12 v-8 l-4,-4 z M9,31 v4 h4';
+const WORD = 'M20,39 C26,37 31,26 32,14 C33,5 28,2 27,10 C26,20 28,42 28,54 C28,61 23,60 24,53 C25,46 31,41 37,38'
+  + ' C41,36 45,27 51,25 C45,21 40,28 41,35 C42,41 49,40 52,28 C51,34 51,41 55,40 C58,39 61,34 63,29'
+  + ' C67,20 69,7 66,4 C63,2 62,12 62,24 L62,39 C64,31 71,27 73,33 C75,39 69,43 63,39 C68,42 74,38 77,31'
+  + ' C81,21 83,7 80,4 C77,2 76,14 76,27 C76,37 77,42 81,40 C84,39 86,36 88,33'
+  + ' C92,31 96,27 93,24 C90,22 86,28 87,34 C88,40 95,41 101,36 C106,32 112,35 120,33';
+function sign(x, y, s, attrs, foldAttrs) {
+  return `<g transform="translate(${x},${y}) scale(${s})" fill="none" stroke-linecap="round" stroke-linejoin="round" ${attrs}>`
+    + `<path d="${FOLD}" ${foldAttrs || ''}/><path d="${WORD}"/></g>`;
+}
+
+// ------------------------------------------------------------------ the napkin itself
+function frame({ title, tint = '#f6f1e6', seed = 1, defs = '', pressed = '', body = '', dots = true }) {
+  const b0 = 12, b1 = 31;
+  const band = `M${PX + b0},${PY + b0}h${PW - 2 * b0}v${PH - 2 * b0}h${-(PW - 2 * b0)}z M${PX + b1},${PY + b1}h${PW - 2 * b1}v${PH - 2 * b1}h${-(PW - 2 * b1)}z`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${W} ${H}">
+<title>${title}</title>
+<defs>
+  <filter id="paper" ${FU}>
+    <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="3" seed="${seed}" result="deckle"/>
+    <feDisplacementMap in="SourceGraphic" in2="deckle" scale="7" xChannelSelector="R" yChannelSelector="G" result="sheet"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="4" seed="${seed + 7}" result="tooth"/>
+    <feDiffuseLighting in="tooth" surfaceScale=".75" diffuseConstant="1.1" lighting-color="#ffffff" result="lit"><feDistantLight azimuth="225" elevation="65"/></feDiffuseLighting>
+    <feBlend in="sheet" in2="lit" mode="multiply" result="p"/>
+    <feComposite in="p" in2="sheet" operator="in"/>
+  </filter>
+  <filter id="shadow" ${FU}><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000" flood-opacity=".4"/></filter>
+  <!-- pressing: alpha is height, light comes from the upper left, flat ground is exactly mid-grey -->
+  <filter id="press" ${FU}>
+    <feGaussianBlur in="SourceAlpha" stdDeviation=".9" result="h"/>
+    <feDiffuseLighting in="h" surfaceScale="1.5" diffuseConstant="1" lighting-color="#ffffff"><feDistantLight azimuth="225" elevation="30"/></feDiffuseLighting>
+  </filter>
+  <pattern id="dots" width="10" height="17.3" patternUnits="userSpaceOnUse">
+    <circle cx="0" cy="0" r="1.7"/><circle cx="10" cy="0" r="1.7"/><circle cx="5" cy="8.65" r="1.7"/><circle cx="0" cy="17.3" r="1.7"/><circle cx="10" cy="17.3" r="1.7"/>
+  </pattern>
+  <clipPath id="sheetClip"><rect x="${PX + 6}" y="${PY + 6}" width="${PW - 12}" height="${PH - 12}"/></clipPath>
+  ${defs}
+</defs>
+<g filter="url(#shadow)"><rect x="${PX}" y="${PY}" width="${PW}" height="${PH}" fill="${tint}" filter="url(#paper)"/></g>
+<g style="mix-blend-mode:hard-light" clip-path="url(#sheetClip)" opacity=".75"><g filter="url(#press)">
+  ${dots ? `<path d="${band}" fill="url(#dots)" fill-rule="evenodd"/>` : ''}
+  ${pressed}
+</g></g>
+${body}
+</svg>
+`;
+}
+const label = (x, y, t, fill = '#8d8474', extra = '') =>
+  `<text x="${x}" y="${y}" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="12" fill="${fill}" ${extra}>${t}</text>`;
+
+// ================================================================== 01 one line, eight hands
+function hands() {
+  const R = rng(4);
+  const N = 140, X0 = 170, X1 = 720;
+  const gesture = y0 => {
+    const p = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      p.push([X0 + (X1 - X0) * t, y0 + 17 * Math.sin(2 * Math.PI * 1.75 * t + 0.4) * (0.45 + 0.55 * Math.sin(Math.PI * t))]);
+    }
+    return p;
+  };
+  const d = p => 'M' + p.map(q => n1(q[0]) + ',' + n1(q[1])).join('L');
+  const rows = ['the idea', 'pencil', 'biro', 'felt-tip', 'dry brush', 'wash', 'crayon', 'no ink at all'];
+  const y = i => 80 + 54 * i;
+  const base = `fill="none" stroke-linecap="round" stroke-linejoin="round"`;
+  // dry brush: a bundle of hairs, each running out of ink on its own schedule
+  let hairs = '';
+  const g = gesture(y(4));
+  for (let k = -7; k <= 7; k++) {
+    const i0 = Math.floor(R() * 5), i1 = N - Math.floor(R() * 14);
+    const q = [];
+    for (let i = i0; i <= i1; i++) {
+      const a = g[Math.max(0, i - 1)], b = g[Math.min(N, i + 1)];
+      const nx = -(b[1] - a[1]), ny = b[0] - a[0], l = Math.hypot(nx, ny);
+      const spread = 1.25 * (0.75 + 0.35 * Math.sin(i * 0.09 + 1));
+      q.push([g[i][0] + nx / l * k * spread, g[i][1] + ny / l * k * spread]);
+    }
+    const dash = [];
+    let wet = 260 + R() * 240;
+    for (let j = 0; j < 7; j++) { dash.push(n1(wet), n1(2 + R() * (6 + j * 7))); wet = 20 + R() * 90 / (1 + j * 0.3); }
+    hairs += `<path d="${d(q)}" stroke-width="${n1(0.7 + R() * 0.9)}" stroke-dasharray="${dash.join(' ')}" opacity="${n1(0.55 + R() * 0.4)}"/>`;
+  }
+  const body = `
+  <g style="mix-blend-mode:multiply">
+    ${rows.map((r, i) => label(58, y(i) + 4, r)).join('\n    ')}
+    <path d="${d(gesture(y(0)))}" ${base} stroke="#3b3a38" stroke-width=".6"/>
+    <path d="${d(gesture(y(1)))}" ${base} stroke="#3d3b3a" stroke-width="2.4" filter="url(#pencil)"/>
+    <g filter="url(#biro)"><path d="${d(gesture(y(2)))}" ${base} stroke="#22308f" stroke-width="1.5"/></g>
+    <path d="${d(gesture(y(3)))}" ${base} stroke="#0f7f78" stroke-width="7" opacity=".9" filter="url(#felt)"/>
+    <g ${base} stroke="#191715" filter="url(#hand)">${hairs}</g>
+    <path d="${d(gesture(y(5)))}" ${base} stroke="#3c4f9c" stroke-width="20" filter="url(#wash)"/>
+    <path d="${d(gesture(y(6)))}" ${base} stroke="#e8792b" stroke-width="10" filter="url(#crayon)"/>
+    ${sign(628, 474, 0.72, 'stroke="#3d3b3a" stroke-width="2.2" filter="url(#pencil)"')}
+  </g>`;
+  const pressed = `<path d="${d(gesture(y(7)))}" ${base} stroke="#000" stroke-width="5"/>`;
+  return frame({
+    title: 'one line, eight hands', seed: 3, pressed, body,
+    defs: M.pencil('pencil', 3) + M.biro('biro', 5) + M.felt('felt', 7) + M.hand('hand', 9, 1.8, 0.04)
+      + M.wash('wash', 21, { scale: 10, freq: 0.03, rim: 3.5, edge: 0.8 }) + M.crayon('crayon', 13),
+  });
+}
+
+// ================================================================== 02 persimmons, in wash
+function persimmons() {
+  const R = rng(8);
+  const fruit = (cx, cy, a, b, rot = 0, e = 2.7) => {
+    const p = [];
+    for (let i = 0; i < 48; i++) {
+      const t = i / 48 * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t);
+      let x = a * Math.sign(c) * Math.pow(Math.abs(c), 2 / e), y = b * Math.sign(s) * Math.pow(Math.abs(s), 2 / e);
+      const r = rot * Math.PI / 180;
+      p.push([cx + x * Math.cos(r) - y * Math.sin(r), cy + x * Math.sin(r) + y * Math.cos(r)]);
+    }
+    return 'M' + p.map(q => n1(q[0]) + ',' + n1(q[1])).join('L') + 'Z';
+  };
+  const calyx = (cx, cy, s, rot) => {
+    let dd = '';
+    for (let k = 0; k < 4; k++) {
+      const a = (rot + k * 90) * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+      const P = (u, v) => n1(cx + (u * ca - v * sa) * s) + ',' + n1(cy + (u * sa + v * ca) * s * 0.5);
+      dd += `M${P(0, 0)}C${P(8, -15)} ${P(26, -11)} ${P(32, 0)}C${P(26, 11)} ${P(8, 15)} ${P(0, 0)}Z`;
+    }
+    return dd;
+  };
+  const F = [[236, 300, 80, 66, -4], [410, 322, 74, 61, 3], [566, 292, 66, 55, 6]];
+  let washes = '', pencil = '';
+  F.forEach(([cx, cy, a, b, rot], i) => {
+    const hl = `M${cx - a * 0.42},${cy - b * 0.3}a${a * 0.2},${b * 0.14} -25 1 0 ${a * 0.3},${-b * 0.16}a${a * 0.2},${b * 0.14} -25 1 0 ${-a * 0.3},${b * 0.16}Z`;
+    washes += `
+    <ellipse cx="${cx + 26}" cy="${cy + b * 0.92}" rx="${a * 1.05}" ry="${b * 0.2}" fill="#5f5a80" filter="url(#wS${i})"/>
+    <path d="${fruit(cx, cy, a, b, rot)}${hl}" fill-rule="evenodd" fill="#f6a52c" filter="url(#wA${i})"/>
+    <path d="${fruit(cx + a * 0.13, cy + b * 0.17, a * 0.8, b * 0.76, rot)}" fill="#e85d1c" filter="url(#wB${i})"/>
+    <path d="${fruit(cx + a * 0.34, cy + b * 0.46, a * 0.5, b * 0.42, rot + 20)}" fill="#b93a1c" filter="url(#wC${i})"/>
+    <path d="${calyx(cx - a * 0.05, cy - b * 0.72, a / 80, 20 + i * 31)}" fill="#5d6f2a" filter="url(#wK${i})"/>
+    <path d="${calyx(cx - a * 0.05, cy - b * 0.72, a / 150, 60 + i * 31)}" fill="#3e4a20" filter="url(#wK${i})"/>`;
+    // the underdrawing: two loose passes that do not quite agree with the paint
+    const j = () => (R() - 0.5) * 7;
+    pencil += `<path d="${fruit(cx + j(), cy + j(), a * 1.01, b * 1.01, rot + j())}"/><path d="${fruit(cx + j(), cy + j(), a * 0.985, b * 1.0, rot + j(), 2.4)}" stroke-dasharray="${n1(120 + R() * 80)} ${n1(20 + R() * 40)}"/>`
+      + `<path d="M${cx - a * 0.05},${cy - b * 0.72}l${n1(j() * 2)},${n1(-13 + j())}"/>`;
+  });
+  const defs = F.map((f, i) =>
+    M.wash(`wS${i}`, 30 + i * 9, { scale: 16, rim: 4, edge: 0.6, pool: [2.2, -0.55] })
+    + M.wash(`wA${i}`, 41 + i * 9, { scale: 13, rim: 6, edge: 0.9, pool: [2.4, -0.5] })
+    + M.wash(`wB${i}`, 52 + i * 9, { scale: 22, rim: 8, edge: 0.75, pool: [3.4, -1.15], soft: 3 })
+    + M.wash(`wC${i}`, 63 + i * 9, { scale: 26, rim: 7, edge: 0.7, pool: [3.6, -1.3], soft: 4 })
+    + M.wash(`wK${i}`, 74 + i * 9, { scale: 7, freq: 0.05, rim: 2.5, edge: 0.8, pool: [2, -0.2] })
+  ).join('') + M.wash('wT', 5, { scale: 34, freq: 0.012, rim: 9, edge: 0.8, pool: [2.6, -0.95], soft: 2 })
+    + M.pencil('pencil', 3, 3.2, -0.95);
+  const body = `
+  <g style="mix-blend-mode:multiply">
+    <path d="M96,352 C240,338 520,346 706,336 L712,430 C520,446 250,436 92,442Z" fill="#9db3bd" filter="url(#wT)"/>
+    ${washes}
+  </g>
+  <g style="mix-blend-mode:multiply" fill="none" stroke="#4a4744" stroke-width="1.3" stroke-linecap="round" filter="url(#pencil)" opacity=".8">
+    ${pencil}
+    <path d="M84,349 C200,342 330,346 420,343 M540,340 C610,338 680,337 722,333"/>
+  </g>
+  <g style="mix-blend-mode:multiply">${sign(606, 462, 0.8, 'stroke="#b93a1c" stroke-width="5.5" filter="url(#wSig)"', 'stroke-width="3.5"')}</g>`;
+  return frame({ title: 'three persimmons, in wash', seed: 6, body, defs: defs + M.wash('wSig', 90, { scale: 3, freq: 0.06, rim: 1.6, edge: 0.7, pool: [2, 0], soft: 0.5 }) });
+}
+
+// ================================================================== 03 an egg made only of lines
+function egg() {
+  const R = rng(11);
+  const cx = 388, cy = 300, A = 128, B = 90, horizon = 322;
+  const Lr = [-0.55, -0.62, 0.56], Ll = Math.hypot(...Lr), L = Lr.map(v => v / Ll);
+  const inEgg = (x, y) => {
+    const nx = (x - cx) / A; if (Math.abs(nx) >= 1) return null;
+    const ny = (y - cy) / (B * (1 - 0.13 * nx)), q = nx * nx + ny * ny;
+    return q >= 1 ? null : [nx, ny, Math.sqrt(1 - q)];
+  };
+  const tone = (x, y) => {
+    const n = inEgg(x, y);
+    if (n) {
+      const lam = Math.max(0, n[0] * L[0] + n[1] * L[1] + n[2] * L[2]);
+      let d = 1 - 1.1 * Math.pow(lam, 0.85);
+      d -= 0.3 * Math.max(0, n[1]) * (1 - n[2]);            // light bouncing back up off the table
+      return clamp(d, 0, 0.93);
+    }
+    const fade = sstep(78, 150, x) * sstep(722, 650, x) * sstep(60, 120, y) * sstep(482, 440, y);
+    if (y < horizon) return (0.25 + 0.27 * Math.exp(-Math.pow((x - 240) / 200, 2))) * (0.25 + 0.75 * fade) * sstep(0, 0.15, fade);
+    const sx = cx + 92, sy = cy + B + 2, q = Math.pow((x - sx) / 185, 2) + Math.pow((y - sy) / 27, 2);
+    return q < 1 ? 0.95 * Math.pow(1 - q, 0.55) : -fade;     // negative = bare table: a few level lines only
+  };
+  const layers = [[40, 5.5, 0.15], [-36, 5.5, 0.37], [82, 5, 0.57], [8, 4.4, 0.75]];
+  let out = '';
+  for (const [deg, pitch, thr] of layers) {
+    let row = 0;
+    const a = deg * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), vx = -uy, vy = ux;
+    let dd = '';
+    for (let o = -520; o <= 520; o += pitch) {
+      const oo = o + (R() - 0.5) * pitch * 0.5, tj = thr + (R() - 0.5) * 0.05, level = deg === 8 && row++ % 4 === 0, tl = 0.25 + R() * 0.5;
+      let start = null, last = null;
+      const flush = () => {
+        if (start != null && last - start > 9) {
+          const s0 = start - R() * R() * 16, s1 = last + R() * R() * 16, bow = (R() - 0.5) * 2.2;
+          const P = s => [400 + ux * s + vx * oo, 280 + uy * s + vy * oo];
+          const p0 = P(s0), p1 = P(s1), pm = P((s0 + s1) / 2);
+          dd += `M${n1(p0[0])},${n1(p0[1])}Q${n1(pm[0] + vx * bow)},${n1(pm[1] + vy * bow)} ${n1(p1[0])},${n1(p1[1])}`;
+        }
+        start = null;
+      };
+      for (let s = -520; s <= 520; s += 2.5) {
+        const x = 400 + ux * s + vx * oo, y = 280 + uy * s + vy * oo;
+        const tn = tone(x, y);
+        const on = x > 80 && x < 720 && y > 62 && y < 486 && (tn < 0 ? level && -tn > tl : tn > tj);
+        if (on) { if (start == null) start = s; last = s; } else flush();
+      }
+      flush();
+    }
+    out += `<path d="${dd}"/>`;
+  }
+  const body = `
+  <g style="mix-blend-mode:multiply" fill="none" stroke="#2a2420" stroke-width=".85" stroke-linecap="round" opacity=".92" filter="url(#hand)">${out}</g>
+  <g style="mix-blend-mode:multiply">${sign(622, 458, 0.76, 'stroke="#2a2420" stroke-width="1.1" filter="url(#hand)"')}</g>`;
+  return frame({ title: 'an egg made only of lines', seed: 12, body, defs: M.hand('hand', 6, 1.6, 0.05) });
+}
+
+// ================================================================== 04 pressed leaf, coffee ring
+function pressed() {
+  const ginkgo = (px, py, Rr, rot, seedK) => {
+    const t0 = 203, t1 = 337, mid = 270, pts = [], veins = [];
+    const rad = t => t * Math.PI / 180;
+    const rOf = t => Rr * (1 + 0.03 * Math.sin(rad(t) * 11 + seedK) + 0.018 * Math.sin(rad(t) * 27 + 1)
+      - 0.34 * Math.exp(-Math.pow((t - mid - 3) / 3.2, 2)) - 0.1 * Math.pow(Math.abs(t - mid) / 67, 3));
+    for (let t = t0; t <= t1; t += 1.5) pts.push([n1(Rr * 0 + rOf(t) * Math.cos(rad(t))), n1(rOf(t) * Math.sin(rad(t)))]);
+    for (let t = t0 + 2; t <= t1 - 2; t += 2.4) {
+      const r = rOf(t) * 0.985, bend = (t - mid) * 0.12;
+      veins.push(`M0,0Q${n1(r * 0.5 * Math.cos(rad(t - bend)))},${n1(r * 0.5 * Math.sin(rad(t - bend)))} ${n1(r * Math.cos(rad(t)))},${n1(r * Math.sin(rad(t)))}`);
+    }
+    const c1 = [n1(Rr * 0.42 * Math.cos(rad(t0 + 22))), n1(Rr * 0.42 * Math.sin(rad(t0 + 22)))];
+    const c2 = [n1(Rr * 0.42 * Math.cos(rad(t1 - 22))), n1(Rr * 0.42 * Math.sin(rad(t1 - 22)))];
+    const outline = `M0,0Q${c1} ${pts[0]}L${pts.join('L')}Q${c2} 0,0Z`;
+    return `<g transform="translate(${px},${py}) rotate(${rot})">
+      <path d="M0,0C${n1(Rr * 0.04)},${n1(Rr * 0.2)} ${n1(-Rr * 0.05)},${n1(Rr * 0.38)} ${n1(Rr * 0.06)},${n1(Rr * 0.6)}" fill="none" stroke="#e8e8e8" stroke-width="${n1(Rr * 0.028)}" stroke-linecap="round"/>
+      <path d="${outline}" fill="#b4b4b4" stroke="#f4f4f4" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="${veins.join('')}" fill="none" stroke="#6e6e6e" stroke-width=".9"/>
+    </g>`;
+  };
+  const R = rng(5);
+  let drops = '';
+  for (let i = 0; i < 7; i++) {
+    const a = R() * 6.28, r = 92 + R() * 60;
+    drops += `<circle cx="${n1(548 + Math.cos(a) * r)}" cy="${n1(352 + Math.sin(a) * r * 0.9)}" r="${n1(1.2 + R() * 3.4)}"/>`;
+  }
+  const defs = `
+  <filter id="pressL" ${FU}>
+    <feColorMatrix in="SourceGraphic" type="luminanceToAlpha" result="la"/>
+    <feGaussianBlur in="la" stdDeviation="1.1" result="h"/>
+    <feDiffuseLighting in="h" surfaceScale="1.7" diffuseConstant="1" lighting-color="#ffffff"><feDistantLight azimuth="225" elevation="30"/></feDiffuseLighting>
+  </filter>
+  <filter id="ring" ${FU}>
+    <feTurbulence type="fractalNoise" baseFrequency=".02" numOctaves="3" seed="4" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="9" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation=".7" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="2.6" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1.1" k3="-.75" k4="0" result="rim"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".014" numOctaves="2" seed="19" result="gap"/>
+    <feColorMatrix in="gap" type="matrix" ${alphaFromR(5, -1.9)} result="gapA"/>
+    <feComposite in="rim" in2="gapA" operator="in" result="r1"/>
+    <feComponentTransfer in="soft" result="ghost"><feFuncA type="linear" slope=".16"/></feComponentTransfer>
+    <feMerge><feMergeNode in="ghost"/><feMergeNode in="r1"/></feMerge>
+  </filter>` + M.wash('stain', 33, { scale: 12, rim: 6, edge: 0.9, pool: [2.4, -0.95] })
+    + M.wash('wSig', 90, { scale: 3, freq: 0.06, rim: 1.6, edge: 0.7, pool: [2, 0], soft: 0.5 });
+  const body = `
+  <g style="mix-blend-mode:hard-light" clip-path="url(#sheetClip)" opacity=".85"><g filter="url(#pressL)">
+    <rect width="${W}" height="${H}" fill="#000"/>
+    ${ginkgo(318, 372, 186, -14, 0.4)}
+    ${ginkgo(590, 232, 92, 28, 2.1)}
+    <g transform="translate(96,455) scale(.8)" fill="none" stroke="#bbb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="${FOLD}"/><path d="${WORD}"/></g>
+  </g></g>
+  <g style="mix-blend-mode:multiply">
+    <circle cx="548" cy="352" r="71" fill="#7a5530" filter="url(#stain)" opacity=".3"/>
+    <circle cx="548" cy="352" r="72" fill="none" stroke="#4e2f12" stroke-width="8" filter="url(#ring)"/>
+    <path d="M618,395 a72,72 0 0 1 -54,28" fill="none" stroke="#4e2f12" stroke-width="5" filter="url(#ring)" transform="translate(9,7)"/>
+    <g fill="#5a3818" filter="url(#ring)">${drops}</g>
+  </g>`;
+  return frame({ title: 'pressed leaf, coffee ring', seed: 20, body, defs });
+}
+
+// ================================================================== 05 lamp, rain
+function lamp() {
+  const R = rng(17);
+  const G = 402;
+  let rain = '', ripples = '', town = '';
+  for (let i = 0; i < 110; i++) {
+    const x = -40 + R() * 900, len = 9 + R() * 20, gap = 70 + R() * 150, per = len + gap, front = R() < 0.18;
+    const y1 = front ? H : G + R() * 30, dur = n1(per / (front ? 520 : 380));
+    rain += `<line x1="${n1(x)}" y1="-30" x2="${n1(x - (y1 + 30) * 0.17)}" y2="${n1(y1)}" stroke-width="${front ? 1.5 : n1(0.6 + R() * 0.5)}" stroke-dasharray="${n1(len)} ${n1(gap)}" stroke-dashoffset="${n1(R() * per)}">`
+      + `<animate attributeName="stroke-dashoffset" by="${n1(-per)}" dur="${dur}s" repeatCount="indefinite"/></line>`;
+  }
+  for (let i = 0; i < 16; i++) {
+    const x = 60 + R() * 680, y = G + 12 + R() * 110, k = 0.6 + (y - G) / 110, dur = n1(1.1 + R() * 0.9), bg = n1(-R() * 2);
+    ripples += `<ellipse cx="${n1(x)}" cy="${n1(y)}" rx="${n1(7 * k)}" ry="${n1(2 * k)}" opacity=".5">`
+      + `<animate attributeName="rx" values="0;${n1(16 * k)}" dur="${dur}s" begin="${bg}s" repeatCount="indefinite"/>`
+      + `<animate attributeName="ry" values="0;${n1(4.5 * k)}" dur="${dur}s" begin="${bg}s" repeatCount="indefinite"/>`
+      + `<animate attributeName="opacity" values=".9;0" dur="${dur}s" begin="${bg}s" repeatCount="indefinite"/></ellipse>`;
+  }
+  const cols = ['#ffd9a0', '#ffc27a', '#cfe3ff', '#ffb36b', '#ffe9c4'];
+  for (let i = 0; i < 13; i++) {
+    const x = 470 + i * 19 + R() * 9, c = cols[Math.floor(R() * cols.length)], r = n1(1 + R() * 1.3);
+    town += `<circle cx="${n1(x)}" cy="${n1(G - 6 - R() * 16)}" r="${r}" fill="${c}"/>`;
+  }
+  const defs = `
+  <radialGradient id="glow" gradientUnits="userSpaceOnUse" cx="352" cy="166" r="210">
+    <stop offset="0" stop-color="#fff1cf" stop-opacity="1"/><stop offset=".04" stop-color="#ffd98f" stop-opacity=".85"/>
+    <stop offset=".14" stop-color="#ffb654" stop-opacity=".36"/><stop offset=".45" stop-color="#ff8f3a" stop-opacity=".1"/>
+    <stop offset="1" stop-color="#ff7a2a" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="lit" gradientUnits="userSpaceOnUse" cx="352" cy="200" r="230">
+    <stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4a78" stop-opacity="0"/><stop offset=".72" stop-color="#4a5a8a" stop-opacity=".5"/><stop offset=".73" stop-color="#000" stop-opacity="0"/></linearGradient>
+  <linearGradient id="sink" gradientUnits="userSpaceOnUse" x1="0" y1="${G}" x2="0" y2="${H}"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity=".15"/></linearGradient>
+  <mask id="litMask" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="url(#lit)"/></mask>
+  <mask id="sinkMask" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect y="${G}" width="${W}" height="${H - G}" fill="url(#sink)"/></mask>
+  <filter id="water" ${FU}>
+    <feTurbulence type="fractalNoise" baseFrequency=".006 .11" numOctaves="2" seed="3" result="w"><animate attributeName="seed" values="3;4;5;6;7;8" dur="1.8s" calcMode="discrete" repeatCount="indefinite"/></feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="w" scale="34" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feGaussianBlur in="d" stdDeviation="1.6 .4"/>
+  </filter>
+  <filter id="soft" ${FU}><feGaussianBlur stdDeviation="1.3"/></filter>
+  <filter id="neon" ${FU}><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <g id="rain" fill="none" stroke-linecap="round">${rain}</g>
+  <g id="scene">
+    <g filter="url(#soft)">${town}</g>
+    <circle cx="352" cy="166" r="210" fill="url(#glow)"/>
+    <path d="M300,${G} L300,196 C300,160 316,146 340,148" fill="none" stroke="#070910" stroke-width="5" stroke-linecap="round"/>
+    <path d="M336,148 h30 l-5,13 h-20 z" fill="#070910"/>
+    <ellipse cx="352" cy="163" rx="8" ry="4" fill="#fff6dc"/>
+  </g>`;
+  const body = `
+  <rect width="${W}" height="${H}" fill="url(#dusk)" style="mix-blend-mode:screen" clip-path="url(#sheetClip)"/>
+  <g style="mix-blend-mode:screen" clip-path="url(#sheetClip)">
+    <use href="#scene" xlink:href="#scene"/>
+    <g mask="url(#sinkMask)" opacity=".85"><g filter="url(#water)"><use href="#scene" xlink:href="#scene" transform="translate(0,${n1(1.45 * G)}) scale(1,-.45)"/></g></g>
+    <use href="#rain" xlink:href="#rain" stroke="#93a8cf" opacity=".28"/>
+    <g mask="url(#litMask)"><use href="#rain" xlink:href="#rain" stroke="#ffe6b0" opacity=".95"/></g>
+    <g fill="none" stroke="#b9c8e6" stroke-width=".8">${ripples}</g>
+    ${sign(626, 470, 0.74, 'stroke="#ffc978" stroke-width="1.8" filter="url(#neon)"')}
+  </g>
+  <path d="M300,${G} L300,196 C300,160 316,146 340,148" fill="none" stroke="#070910" stroke-width="5" stroke-linecap="round"/>
+  <path d="M336,148 h30 l-5,13 h-20 z" fill="#070910"/>`;
+  return frame({ title: 'lamp, rain', tint: '#1a2233', seed: 30, body, defs });
+}
+
+// ================================================================== 06 two stones, one pond
+function pond() {
+  const rings = (cx, cy, col) => {
+    let s = '';
+    for (let r = 3; r < 430; r += 6) s += `<circle cx="${cx}" cy="${cy}" r="${r}"/>`;
+    return `<g fill="none" stroke="${col}" stroke-width="2.5">${s}</g>`;
+  };
+  const defs = `<clipPath id="pondClip"><circle cx="400" cy="270" r="204"/></clipPath>` + M.pencil('pencil', 3) + M.hand('hand', 4, 1.2, 0.02);
+  const body = `
+  <g style="mix-blend-mode:multiply" clip-path="url(#pondClip)">
+    <g filter="url(#hand)" opacity=".9">
+      ${rings(368, 270, '#27377a')}
+      <g style="mix-blend-mode:multiply">${rings(432, 270, '#d8472a')}
+        <animateTransform attributeName="transform" type="translate" values="0,0; -24,18; -64,0; -24,-18; 0,0" dur="28s" repeatCount="indefinite"/>
+      </g>
+    </g>
+  </g>
+  <g style="mix-blend-mode:multiply">
+    <circle cx="400" cy="270" r="206" fill="none" stroke="#4a4744" stroke-width="1.6" filter="url(#pencil)"/>
+    ${sign(634, 470, 0.72, 'stroke="#27377a" stroke-width="1.6"', 'stroke="#d8472a"')}
+  </g>`;
+  return frame({ title: 'two stones, one pond', seed: 40, body, defs });
+}
+
+const studies = { '01-hands': hands, '02-persimmons': persimmons, '03-egg': egg, '04-pressed': pressed, '05-lamp': lamp, '06-pond': pond };
+for (const [name, fn] of Object.entries(studies)) {
+  const svg = fn();
+  fs.writeFileSync(path.join(OUT, name + '.svg'), svg);
+  console.log(name + '.svg', (svg.length / 1024).toFixed(1) + ' kB');
+}

@@ -1,0 +1,319 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 800 560">
+<title>three persimmons, in wash</title>
+<defs>
+  <filter id="paper" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="3" seed="6" result="deckle"/>
+    <feDisplacementMap in="SourceGraphic" in2="deckle" scale="7" xChannelSelector="R" yChannelSelector="G" result="sheet"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="4" seed="13" result="tooth"/>
+    <feDiffuseLighting in="tooth" surfaceScale=".75" diffuseConstant="1.1" lighting-color="#ffffff" result="lit"><feDistantLight azimuth="225" elevation="65"/></feDiffuseLighting>
+    <feBlend in="sheet" in2="lit" mode="multiply" result="p"/>
+    <feComposite in="p" in2="sheet" operator="in"/>
+  </filter>
+  <filter id="shadow" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000" flood-opacity=".4"/></filter>
+  <!-- pressing: alpha is height, light comes from the upper left, flat ground is exactly mid-grey -->
+  <filter id="press" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feGaussianBlur in="SourceAlpha" stdDeviation=".9" result="h"/>
+    <feDiffuseLighting in="h" surfaceScale="1.5" diffuseConstant="1" lighting-color="#ffffff"><feDistantLight azimuth="225" elevation="30"/></feDiffuseLighting>
+  </filter>
+  <pattern id="dots" width="10" height="17.3" patternUnits="userSpaceOnUse">
+    <circle cx="0" cy="0" r="1.7"/><circle cx="10" cy="0" r="1.7"/><circle cx="5" cy="8.65" r="1.7"/><circle cx="0" cy="17.3" r="1.7"/><circle cx="10" cy="17.3" r="1.7"/>
+  </pattern>
+  <clipPath id="sheetClip"><rect x="20" y="18" width="760" height="524"/></clipPath>
+  
+  <filter id="wS0" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="30" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="16" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="1" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="4" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.6" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="33" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.2 0 0 0 -0.55" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="35" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wA0" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="41" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="13" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="1" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="6" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.9" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="44" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.4 0 0 0 -0.5" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="46" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wB0" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="52" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="22" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="3" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="8" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.75" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="55" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  3.4 0 0 0 -1.15" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="57" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wC0" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="63" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="26" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="4" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="7" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.7" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="66" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  3.6 0 0 0 -1.3" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="68" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wK0" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" seed="74" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="7" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="1" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="2.5" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.8" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="77" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2 0 0 0 -0.2" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="79" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wS1" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="39" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="16" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="1" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="4" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.6" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="42" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.2 0 0 0 -0.55" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="44" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wA1" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="50" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="13" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="1" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="6" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.9" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="53" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.4 0 0 0 -0.5" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="55" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wB1" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="61" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="22" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="3" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="8" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.75" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="64" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  3.4 0 0 0 -1.15" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="66" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wC1" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="72" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="26" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="4" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="7" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.7" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="75" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  3.6 0 0 0 -1.3" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="77" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wK1" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" seed="83" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="7" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="1" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="2.5" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.8" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="86" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2 0 0 0 -0.2" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="88" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wS2" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="48" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="16" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="1" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="4" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.6" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="51" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.2 0 0 0 -0.55" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="53" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wA2" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="59" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="13" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="1" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="6" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.9" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="62" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.4 0 0 0 -0.5" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="64" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wB2" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="70" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="22" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="3" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="8" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.75" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="73" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  3.4 0 0 0 -1.15" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="75" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wC2" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="81" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="26" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="4" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="7" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.7" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="84" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  3.6 0 0 0 -1.3" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="86" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wK2" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" seed="92" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="7" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="1" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="2.5" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.8" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="95" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2 0 0 0 -0.2" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="97" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="wT" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed="5" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="34" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="2" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="9" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.8" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="8" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.6 0 0 0 -0.95" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="10" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+  <filter id="pencil" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="3" result="w"/>
+    <feDisplacementMap in="SourceGraphic" in2="w" scale="2" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="2" seed="4" result="g"/>
+    <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  3.2 0 0 0 -0.95" result="gm"/>
+    <feComposite in="d" in2="gm" operator="in"/>
+  </filter>
+  <filter id="wSig" filterUnits="userSpaceOnUse" x="0" y="0" width="800" height="560" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="4" seed="90" result="big"/>
+    <feDisplacementMap in="SourceGraphic" in2="big" scale="3" xChannelSelector="R" yChannelSelector="G" result="shape"/>
+    <feGaussianBlur in="shape" stdDeviation="0.5" result="soft"/>
+    <feGaussianBlur in="shape" stdDeviation="1.6" result="inner"/>
+    <feComposite in="soft" in2="inner" operator="arithmetic" k1="0" k2="1" k3="-0.7" k4="0" result="edgeDark"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="3" seed="93" result="pool"/>
+    <feColorMatrix in="pool" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2 0 0 0 0" result="poolA"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="95" result="gr"/>
+    <feColorMatrix in="gr" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -0.05" result="grA"/>
+    <feComposite in="soft" in2="poolA" operator="in" result="b1"/>
+    <feComposite in="b1" in2="grA" operator="in" result="body"/>
+    <feComposite in="edgeDark" in2="grA" operator="in" result="rimG"/>
+    <feMerge><feMergeNode in="body"/><feMergeNode in="rimG"/></feMerge>
+  </filter>
+</defs>
+<g filter="url(#shadow)"><rect x="14" y="12" width="772" height="536" fill="#f6f1e6" filter="url(#paper)"/></g>
+<g style="mix-blend-mode:hard-light" clip-path="url(#sheetClip)" opacity=".75"><g filter="url(#press)">
+  <path d="M26,24h748v512h-748z M45,43h710v474h-710z" fill="url(#dots)" fill-rule="evenodd"/>
+  
+</g></g>
+
+  <g style="mix-blend-mode:multiply">
+    <path d="M96,352 C240,338 520,346 706,336 L712,430 C520,446 250,436 92,442Z" fill="#9db3bd" filter="url(#wT)"/>
+    
+    <ellipse cx="262" cy="360.72" rx="84" ry="13.200000000000001" fill="#5f5a80" filter="url(#wS0)"/>
+    <path d="M315.8,294.4L316.3,309L315.5,318.8L313.5,327.1L310.5,334.4L306.4,340.9L301.3,346.6L295.1,351.6L287.9,355.8L279.5,359.3L269.8,362.1L258.2,364.2L240.6,365.8L222.9,366.7L211.2,366.2L201.2,364.8L192.4,362.5L184.6,359.3L177.8,355.2L172,350.3L167,344.4L163,337.6L159.9,329.6L157.7,320.1L156.2,305.6L155.7,291L156.5,281.2L158.5,272.9L161.5,265.6L165.6,259.1L170.7,253.4L176.9,248.4L184.1,244.2L192.5,240.7L202.2,237.9L213.8,235.8L231.4,234.2L249.1,233.3L260.8,233.8L270.8,235.2L279.6,237.5L287.4,240.7L294.2,244.8L300,249.7L305,255.6L309,262.4L312.1,270.4L314.3,279.9ZM202.4,280.2a16,9.24 -25 1 0 24,-10.56a16,9.24 -25 1 0 -24,10.56Z" fill-rule="evenodd" fill="#f6a52c" filter="url(#wA0)"/>
+    <path d="M310.2,306.8L310.6,317.9L309.9,325.3L308.3,331.6L305.9,337.2L302.6,342.1L298.5,346.5L293.6,350.3L287.8,353.5L281,356.2L273.3,358.3L264,360L249.9,361.3L235.7,361.9L226.4,361.6L218.4,360.6L211.3,358.9L205.1,356.5L199.7,353.4L195,349.6L191.1,345.2L187.9,340L185.5,334L183.7,326.7L182.6,315.7L182.2,304.6L182.9,297.2L184.5,290.9L186.9,285.3L190.2,280.3L194.3,276L199.2,272.2L205,268.9L211.8,266.2L219.5,264.1L228.8,262.5L242.9,261.2L257.1,260.5L266.4,260.8L274.4,261.8L281.5,263.6L287.7,266L293.1,269.1L297.8,272.8L301.7,277.3L304.9,282.4L307.3,288.5L309.1,295.7Z" fill="#e85d1c" filter="url(#wB0)"/>
+    <path d="M301.7,341.4L299.7,347.2L297.9,350.9L295.7,353.8L293.2,356.2L290.3,358.1L287,359.5L283.4,360.4L279.3,360.9L274.9,360.9L269.9,360.4L264.1,359.3L255.6,357L247.1,354.4L241.6,352.3L237.1,350.1L233.3,347.7L230.1,345.2L227.5,342.4L225.5,339.5L224.1,336.4L223.2,333L222.9,329.4L223.3,325.3L224.7,319.3L226.7,313.5L228.5,309.8L230.7,306.9L233.2,304.5L236.1,302.6L239.4,301.2L243,300.3L247.1,299.8L251.5,299.8L256.5,300.3L262.3,301.4L270.8,303.7L279.3,306.3L284.8,308.4L289.3,310.6L293.1,313L296.3,315.5L298.9,318.3L300.9,321.2L302.3,324.3L303.2,327.7L303.5,331.3L303.1,335.4Z" fill="#b93a1c" filter="url(#wC0)"/>
+    <path d="M232,252.5C244.6,246.8 260.2,251.8 262.1,258C252.7,262.1 234.4,260.9 232,252.5ZM232,252.5C243.4,258.8 233.4,266.6 221.1,267.5C212.8,262.8 215.2,253.7 232,252.5ZM232,252.5C219.4,258.2 203.8,253.2 201.9,247C211.3,242.9 229.6,244.1 232,252.5ZM232,252.5C220.6,246.2 230.6,238.4 242.9,237.4C251.2,242.1 248.8,251.3 232,252.5Z" fill="#5d6f2a" filter="url(#wK0)"/>
+    <path d="M232,252.5C241.1,252.3 244,257 240.5,259.9C233.9,260 227.2,256.3 232,252.5ZM232,252.5C232.3,257 222.9,258.5 217.2,256.7C217.1,253.4 224.3,250.1 232,252.5ZM232,252.5C222.9,252.6 220,247.9 223.5,245.1C230.1,245 236.8,248.6 232,252.5ZM232,252.5C231.7,247.9 241.1,246.5 246.8,248.2C246.9,251.6 239.7,254.9 232,252.5Z" fill="#3e4a20" filter="url(#wK0)"/>
+    <ellipse cx="436" cy="378.12" rx="77.7" ry="12.200000000000001" fill="#5f5a80" filter="url(#wS1)"/>
+    <path d="M483.9,325.9L482.7,339.3L480.9,348.2L478.1,355.6L474.5,361.9L470,367.4L464.7,372.1L458.5,376L451.4,379.1L443.3,381.3L434,382.8L423.2,383.4L406.8,382.9L390.5,381.7L379.7,379.9L370.7,377.5L362.9,374.4L356.1,370.6L350.4,366.1L345.5,360.9L341.7,355L338.7,348.3L336.8,340.6L335.9,331.6L336.1,318.1L337.3,304.7L339.1,295.8L341.9,288.4L345.5,282.1L350,276.6L355.3,271.9L361.5,268L368.6,264.9L376.7,262.7L386,261.2L396.8,260.6L413.2,261.1L429.5,262.3L440.3,264.1L449.3,266.5L457.1,269.6L463.9,273.4L469.6,277.9L474.5,283.1L478.3,289L481.3,295.7L483.2,303.4L484.1,312.4ZM378.92,303.7a14.8,8.540000000000001 -25 1 0 22.2,-9.76a14.8,8.540000000000001 -25 1 0 -22.2,9.76Z" fill-rule="evenodd" fill="#f6a52c" filter="url(#wA1)"/>
+    <path d="M478.7,335.5L477.8,345.7L476.3,352.4L474.2,358L471.3,362.9L467.7,367L463.5,370.6L458.5,373.5L452.8,375.8L446.4,377.6L439,378.6L430.3,379.1L417.2,378.7L404.1,377.7L395.5,376.4L388.3,374.5L382.1,372.1L376.6,369.2L372,365.8L368.1,361.8L365,357.3L362.7,352.2L361.1,346.4L360.3,339.5L360.5,329.3L361.4,319L362.9,312.3L365.1,306.7L367.9,301.9L371.5,297.7L375.8,294.2L380.7,291.2L386.4,288.9L392.9,287.2L400.3,286.1L408.9,285.7L422,286.1L435.1,287.1L443.7,288.4L450.9,290.2L457.2,292.6L462.6,295.5L467.2,299L471.1,302.9L474.2,307.4L476.6,312.6L478.1,318.4L478.9,325.2Z" fill="#e85d1c" filter="url(#wB1)"/>
+    <path d="M469.2,364.5L466.8,369.6L464.7,372.8L462.4,375.3L459.8,377.2L456.9,378.6L453.8,379.5L450.3,379.9L446.5,379.9L442.4,379.4L437.9,378.4L432.7,376.7L425.1,373.6L417.7,370.3L412.9,367.7L409,365.2L405.8,362.6L403.1,359.9L401.1,357.1L399.5,354.2L398.6,351.2L398.1,348L398.3,344.6L399.1,340.9L401.1,335.6L403.5,330.5L405.6,327.3L408,324.8L410.5,323L413.4,321.6L416.6,320.6L420,320.2L423.8,320.2L427.9,320.7L432.4,321.8L437.6,323.4L445.2,326.5L452.6,329.8L457.4,332.4L461.3,334.9L464.5,337.5L467.2,340.2L469.3,343L470.8,345.9L471.8,348.9L472.2,352.1L472,355.5L471.2,359.2Z" fill="#b93a1c" filter="url(#wC1)"/>
+    <path d="M406.3,278.1C421.7,276.6 429.3,284.2 424.9,289.6C413.5,290.6 400.2,285.3 406.3,278.1ZM406.3,278.1C409.3,285.8 394,289.6 383.3,287.4C381.2,281.7 391.8,275 406.3,278.1ZM406.3,278.1C390.9,279.6 383.3,271.9 387.7,266.6C399.1,265.5 412.4,270.8 406.3,278.1ZM406.3,278.1C403.3,270.4 418.6,266.6 429.3,268.8C431.4,274.5 420.8,281.1 406.3,278.1Z" fill="#5d6f2a" filter="url(#wK1)"/>
+    <path d="M406.3,278.1C413.6,280.1 411.5,284.5 406,286C400.7,284.4 398.8,280 406.3,278.1ZM406.3,278.1C402.2,281.7 393.4,280.7 390.5,277.9C393.6,275.3 402.5,274.3 406.3,278.1ZM406.3,278.1C399,276 401.1,271.6 406.6,270.2C411.9,271.7 413.8,276.2 406.3,278.1ZM406.3,278.1C410.4,274.4 419.2,275.5 422.1,278.2C419,280.9 410.1,281.8 406.3,278.1Z" fill="#3e4a20" filter="url(#wK1)"/>
+    <ellipse cx="592" cy="342.6" rx="69.3" ry="11" fill="#5f5a80" filter="url(#wS2)"/>
+    <path d="M631.6,298.9L629.9,311L627.9,318.8L625.1,325.4L621.6,330.9L617.3,335.7L612.3,339.7L606.6,342.9L600.1,345.3L592.8,347L584.5,347.8L574.8,347.9L560.3,346.7L545.8,344.8L536.3,342.8L528.4,340.2L521.6,337L515.7,333.3L510.8,329L506.7,324.1L503.6,318.5L501.3,312.3L499.9,305.4L499.5,297.2L500.4,285.1L502.1,273L504.1,265.2L506.9,258.6L510.4,253.1L514.7,248.3L519.7,244.3L525.4,241.1L531.9,238.7L539.2,237L547.5,236.2L557.2,236.1L571.7,237.3L586.2,239.2L595.7,241.2L603.6,243.8L610.4,247L616.3,250.7L621.2,255L625.3,259.9L628.4,265.5L630.7,271.7L632.1,278.6L632.5,286.8ZM538.28,275.5a13.200000000000001,7.700000000000001 -25 1 0 19.8,-8.8a13.200000000000001,7.700000000000001 -25 1 0 -19.8,8.8Z" fill-rule="evenodd" fill="#f6a52c" filter="url(#wA2)"/>
+    <path d="M627.1,306.9L625.8,316L624.2,322L622,327L619.2,331.2L615.8,334.8L611.8,337.8L607.3,340.2L602.1,342L596.2,343.3L589.6,343.9L581.9,343.9L570.2,342.9L558.6,341.4L551,339.8L544.7,337.8L539.2,335.4L534.5,332.5L530.6,329.2L527.3,325.5L524.8,321.3L522.9,316.6L521.8,311.2L521.4,305.1L522.1,295.8L523.4,286.7L525,280.7L527.2,275.7L530,271.5L533.4,267.9L537.3,264.9L541.9,262.5L547.1,260.7L552.9,259.4L559.5,258.8L567.3,258.8L578.9,259.8L590.5,261.3L598.1,262.9L604.5,264.9L609.9,267.3L614.6,270.2L618.6,273.5L621.8,277.2L624.4,281.4L626.2,286.1L627.4,291.5L627.7,297.6Z" fill="#e85d1c" filter="url(#wB2)"/>
+    <path d="M618.1,331.8L615.7,336.3L613.6,339L611.4,341.1L609,342.7L606.4,343.9L603.6,344.6L600.4,344.8L597.1,344.6L593.5,344L589.5,342.9L584.9,341.1L578.3,338.1L571.8,334.7L567.7,332.2L564.3,329.8L561.6,327.3L559.4,324.8L557.7,322.2L556.4,319.5L555.7,316.7L555.5,313.8L555.8,310.8L556.7,307.5L558.8,302.8L561.2,298.3L563.3,295.6L565.4,293.5L567.8,291.9L570.5,290.7L573.3,290L576.4,289.8L579.8,290L583.4,290.6L587.4,291.7L591.9,293.5L598.6,296.5L605.1,299.9L609.2,302.4L612.5,304.8L615.3,307.3L617.5,309.8L619.2,312.4L620.4,315.1L621.2,317.9L621.4,320.8L621.1,323.8L620.2,327.1Z" fill="#b93a1c" filter="url(#wC2)"/>
+    <path d="M562.7,252.4C575.9,254.8 574.7,262.4 566.4,265.5C556.7,263.7 551.4,256.5 562.7,252.4ZM562.7,252.4C557.9,259 542.7,258.4 536.6,254.2C540.2,249.4 554.4,246.7 562.7,252.4ZM562.7,252.4C549.5,250 550.7,242.4 559,239.3C568.7,241.1 574,248.3 562.7,252.4ZM562.7,252.4C567.5,245.8 582.7,246.4 588.8,250.6C585.2,255.4 571,258.1 562.7,252.4Z" fill="#5d6f2a" filter="url(#wK2)"/>
+    <path d="M562.7,252.4C566.4,255.6 560.7,258.5 555.2,258.4C552.5,256 555.2,252.1 562.7,252.4ZM562.7,252.4C556.2,254.3 550.4,251.4 550.8,248.7C555.6,247.3 563.2,248.7 562.7,252.4ZM562.7,252.4C559,249.2 564.7,246.3 570.2,246.4C572.9,248.8 570.2,252.7 562.7,252.4ZM562.7,252.4C569.2,250.5 575,253.4 574.6,256.1C569.8,257.5 562.2,256.1 562.7,252.4Z" fill="#3e4a20" filter="url(#wK2)"/>
+  </g>
+  <g style="mix-blend-mode:multiply" fill="none" stroke="#4a4744" stroke-width="1.3" stroke-linecap="round" filter="url(#pencil)" opacity=".8">
+    <path d="M314,293.3L314.9,308L314.3,317.9L312.5,326.3L309.7,333.8L305.7,340.4L300.7,346.3L294.6,351.5L287.4,356L279,359.7L269.3,362.8L257.6,365.1L239.9,367.2L222,368.5L210.1,368.4L200,367.2L191.1,365.1L183.2,362L176.2,358.1L170.2,353.2L165,347.4L160.8,340.6L157.5,332.7L155,323.1L153.2,308.5L152.3,293.7L152.9,283.9L154.7,275.5L157.5,268L161.5,261.3L166.5,255.4L172.6,250.2L179.8,245.8L188.2,242L197.9,239L209.6,236.6L227.3,234.5L245.2,233.3L257,233.4L267.2,234.6L276.1,236.7L284,239.7L291,243.7L297,248.5L302.2,254.3L306.4,261.1L309.7,269.1L312.1,278.6Z"/><path d="M315.9,294.6L316.3,306.7L315.3,316.1L313.2,324.6L309.9,332.2L305.5,339.2L300,345.4L293.5,350.9L285.9,355.6L277.4,359.5L267.7,362.6L256.7,364.8L242.4,366.4L227.9,367L216.8,366.5L206.8,364.9L197.7,362.3L189.5,358.8L182.3,354.4L175.9,349L170.5,342.8L166.1,335.8L162.7,327.7L160.3,318.6L158.8,306.6L158.4,294.5L159.4,285.1L161.6,276.6L164.9,269L169.3,262L174.8,255.8L181.3,250.3L188.8,245.6L197.4,241.7L207,238.6L218,236.4L232.4,234.8L246.8,234.2L258,234.7L268,236.3L277,238.9L285.2,242.4L292.5,246.8L298.8,252.1L304.3,258.4L308.7,265.4L312.1,273.4L314.5,282.6Z" stroke-dasharray="185.5 29.6"/><path d="M232,252.48000000000002l0.1,-16.1"/><path d="M484.7,323.6L483.4,337.1L481.4,346L478.6,353.5L474.9,359.9L470.4,365.4L464.9,370.1L458.6,374L451.4,377L443.2,379.2L433.9,380.6L422.9,381.1L406.4,380.5L389.9,379.1L379,377.3L369.9,374.8L362.1,371.6L355.3,367.7L349.5,363.1L344.7,357.8L340.8,351.7L337.9,344.9L336,337.2L335.1,328.1L335.5,314.5L336.8,300.9L338.8,292L341.6,284.5L345.3,278.1L349.8,272.6L355.3,267.9L361.6,264.1L368.8,261L377,258.8L386.3,257.4L397.3,256.9L413.8,257.5L430.3,258.9L441.2,260.7L450.3,263.3L458.1,266.5L464.9,270.4L470.7,275L475.5,280.3L479.4,286.3L482.3,293.1L484.2,300.8L485.1,309.9Z"/><path d="M480.5,327.5L478.8,338.5L476.3,346.9L472.9,354.2L468.6,360.6L463.5,366.2L457.4,370.9L450.5,374.8L442.9,377.8L434.4,379.9L425.2,381.1L414.8,381.3L401.5,380.3L388.2,378.4L378.2,376L369.3,372.9L361.5,369L354.7,364.4L348.8,359.2L343.9,353.3L340.1,346.7L337.3,339.5L335.5,331.7L334.9,322.9L335.6,311.8L337.3,300.7L339.8,292.3L343.2,285L347.4,278.6L352.6,273L358.7,268.3L365.5,264.4L373.2,261.4L381.6,259.3L390.9,258.2L401.3,258L414.6,259L427.8,260.9L437.9,263.3L446.7,266.4L454.5,270.2L461.4,274.8L467.3,280.1L472.1,286L476,292.6L478.8,299.7L480.6,307.6L481.2,316.3Z" stroke-dasharray="175.5 23.6"/><path d="M406.3,278.08l-5.2,-16.2"/><path d="M632.4,300.6L630.4,312.7L628,320.6L625,327.1L621.3,332.6L616.8,337.3L611.7,341.2L605.8,344.2L599.2,346.5L591.7,347.9L583.3,348.6L573.5,348.3L558.9,346.6L544.3,344.3L534.8,341.9L526.9,339.1L520.1,335.7L514.3,331.7L509.5,327.2L505.6,322.1L502.5,316.4L500.4,310.1L499.3,303L499.1,294.8L500.3,282.6L502.4,270.5L504.8,262.6L507.8,256.1L511.5,250.6L516,245.9L521.1,242.1L527,239L533.6,236.7L541.1,235.3L549.4,234.7L559.2,234.9L573.9,236.6L588.5,238.9L598,241.3L605.9,244.1L612.7,247.5L618.4,251.5L623.3,256L627.2,261.1L630.3,266.8L632.4,273.1L633.5,280.2L633.7,288.4Z"/><path d="M632.6,295.2L631.2,305.2L629,312.8L626,319.4L622.2,325.2L617.7,330.3L612.3,334.6L606.2,338.2L599.4,340.9L591.9,342.9L583.6,344L574.4,344.3L562.5,343.5L550.7,341.9L541.7,339.9L533.8,337.1L526.8,333.7L520.7,329.7L515.4,325L511,319.7L507.5,313.8L504.9,307.3L503.3,300.3L502.7,292.4L503.2,282.3L504.7,272.4L506.8,264.8L509.8,258.2L513.6,252.4L518.2,247.3L523.5,243L529.6,239.4L536.4,236.6L544,234.7L552.2,233.5L561.5,233.3L573.4,234L585.2,235.6L594.2,237.7L602.1,240.4L609.1,243.8L615.2,247.9L620.5,252.6L624.9,257.9L628.4,263.8L630.9,270.2L632.5,277.3L633.1,285.1Z" stroke-dasharray="148.7 40"/><path d="M562.7,252.4l-2.5,-12.9"/>
+    <path d="M84,349 C200,342 330,346 420,343 M540,340 C610,338 680,337 722,333"/>
+  </g>
+  <g style="mix-blend-mode:multiply"><g transform="translate(606,462) scale(0.8)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#b93a1c" stroke-width="5.5" filter="url(#wSig)"><path d="M1,31 v12 h12 v-8 l-4,-4 z M9,31 v4 h4" stroke-width="3.5"/><path d="M20,39 C26,37 31,26 32,14 C33,5 28,2 27,10 C26,20 28,42 28,54 C28,61 23,60 24,53 C25,46 31,41 37,38 C41,36 45,27 51,25 C45,21 40,28 41,35 C42,41 49,40 52,28 C51,34 51,41 55,40 C58,39 61,34 63,29 C67,20 69,7 66,4 C63,2 62,12 62,24 L62,39 C64,31 71,27 73,33 C75,39 69,43 63,39 C68,42 74,38 77,31 C81,21 83,7 80,4 C77,2 76,14 76,27 C76,37 77,42 81,40 C84,39 86,36 88,33 C92,31 96,27 93,24 C90,22 86,28 87,34 C88,40 95,41 101,36 C106,32 112,35 120,33"/></g></g>
+</svg>

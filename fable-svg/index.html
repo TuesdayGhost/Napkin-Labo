@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Napkin Lab · SVG</title>
+<style>
+  :root { --table: #2c2f33; --table-2: #1f2124; --chalk: #e9e3d6; --dim: #a39d90; --rule: #4a4d52; }
+  * { box-sizing: border-box; }
+  html { background: var(--table-2); }
+  body {
+    margin: 0; color: var(--chalk);
+    background: radial-gradient(120% 80% at 30% 0%, #383c41 0%, var(--table) 45%, var(--table-2) 100%) fixed;
+    font: 16px/1.55 Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  }
+  main { max-width: 1180px; margin: 0 auto; padding: 56px 20px 80px; }
+  header { max-width: 640px; margin: 0 0 44px; }
+  h1 { font-weight: normal; font-style: italic; font-size: 40px; line-height: 1.1; margin: 0 0 14px; letter-spacing: -.01em; }
+  h1 small { display: block; font-size: 14px; font-style: normal; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; }
+  p { margin: 0 0 10px; color: #cfc9bc; text-wrap: pretty; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 40px 34px; }
+  figure { margin: 0; }
+  figure a { display: block; transition: transform .25s ease; }
+  figure:nth-child(odd) a { transform: rotate(-.7deg); }
+  figure:nth-child(even) a { transform: rotate(.6deg); }
+  figure:nth-child(3n) a { transform: rotate(.25deg); }
+  figure a:hover, figure a:focus-visible { transform: rotate(0) scale(1.015); outline: none; }
+  img { display: block; width: 100%; height: auto; aspect-ratio: 800 / 560; }
+  figcaption { padding: 8px 14px 0; }
+  figcaption b { font-weight: normal; font-style: italic; font-size: 19px; color: var(--chalk); }
+  figcaption i { font-style: normal; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-right: 10px; }
+  figcaption p { font-size: 14.5px; color: var(--dim); margin-top: 3px; }
+  footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule); max-width: 640px; font-size: 14.5px; }
+  footer p { color: var(--dim); }
+  code { font: 13px/1 ui-monospace, Consolas, monospace; color: #d8c9a3; }
+  @media (prefers-reduced-motion: reduce) { figure a { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1><small>Fable · Napkin Lab · SVG</small>Six napkins, before the memory</h1>
+    <p>The last lab simulated a napkin pixel by pixel. This one is written rather than painted: every napkin here is a single SVG file, a few kilobytes of geometry, with the paper, the pigment and the light all described in text.</p>
+    <p>What I wanted to find out was where the hand could come from, in a medium that is exact by default. Each study answers that a different way.</p>
+  </header>
+
+  <div class="grid">
+    <figure><a href="lab/01-hands.svg"><img src="lab/01-hands.svg" alt="The same wavy line drawn eight times: hairline, pencil, ballpoint, felt-tip, dry brush, watercolour wash, crayon, and embossed with no ink."></a>
+      <figcaption><i>01</i><b>One line, eight hands</b><p>One gesture, eight materials. In SVG a line is an idea first and a substance second, so the substance can be swapped. The dry brush is the exception: fifteen separate hairs, each running out of ink on its own schedule.</p></figcaption></figure>
+
+    <figure><a href="lab/02-persimmons.svg"><img src="lab/02-persimmons.svg" alt="Three orange persimmons in watercolour on a pale blue-grey table wash, with loose pencil outlines."></a>
+      <figcaption><i>02</i><b>Three persimmons, in wash</b><p>Watercolour built from noise: a wandering edge, pigment pushed to the rim, pooling, granulation. Three transparent layers per fruit, multiplied. The pencil underdrawing deliberately disagrees with the paint.</p></figcaption></figure>
+
+    <figure><a href="lab/03-egg.svg"><img src="lab/03-egg.svg" alt="An egg on a table, drawn entirely in cross-hatched pen lines with no outline."></a>
+      <figcaption><i>03</i><b>An egg made only of lines</b><p>No filters doing the work here, and no outline. A lit egg is computed as tone, and four directions of hatching switch on as it darkens. The egg is whatever the lines leave alone.</p></figcaption></figure>
+
+    <figure><a href="lab/04-pressed.svg"><img src="lab/04-pressed.svg" alt="Two ginkgo leaves blind-embossed into the paper, beside a brown coffee ring."></a>
+      <figcaption><i>04</i><b>Pressed leaf, coffee ring</b><p>Two marks a napkin really gets. The ginkgo has no pigment at all: it is a height map, lit from the upper left. The coffee ring is the opposite, pigment with no shape of its own.</p></figcaption></figure>
+
+    <figure><a href="lab/05-lamp.svg"><img src="lab/05-lamp.svg" alt="A street lamp glowing in the rain at night, reflected in wet ground, distant town lights on the horizon."></a>
+      <figcaption><i>05</i><b>Lamp, rain</b><p>Dark paper, where light is added instead of pigment. The rain is drawn twice, once cold and once warm, and the warm copy is only visible near the lamp. The reflection is the scene itself, flipped and disturbed. It moves if you open it.</p></figcaption></figure>
+
+    <figure><a href="lab/06-pond.svg"><img src="lab/06-pond.svg" alt="Two sets of concentric rings, indigo and vermilion, overlapping to produce moiré fringes."></a>
+      <figcaption><i>06</i><b>Two stones, one pond</b><p>Two sets of plain rings, nothing else. The fans and petals between them are interference, and I did not draw them. One set drifts slowly, so the pattern never settles.</p></figcaption></figure>
+  </div>
+
+  <footer>
+    <p>Each napkin is signed with the same written path, a folded corner and a name, put through that napkin's own material: graphite, wash, pen, pressure, light.</p>
+    <p>Everything is generated by <code>build.js</code> into <code>lab/</code>. Each SVG stands alone and can be opened, scaled or printed by itself.</p>
+  </footer>
+</main>
+</body>
+</html>
