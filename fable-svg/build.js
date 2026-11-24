@@ -459,7 +459,125 @@ function pond() {
   return frame({ title: 'two stones, one pond', seed: 40, body, defs });
 }
 
-const studies = { '01-hands': hands, '02-persimmons': persimmons, '03-egg': egg, '04-pressed': pressed, '05-lamp': lamp, '06-pond': pond };
+// ================================================================== 07 the memory: a quiet winter morning
+// Snow is the napkin left alone. The ghost has no pigment either: it is pressed into the paper,
+// and found by two graphite dots and a shadow fainter than the tree's.
+function winter(o = {}) {
+  const R = rng(o.seed || 23);
+  const d = p => 'M' + p.map(q => n1(q[0]) + ',' + n1(q[1])).join('L');
+  const BX = 300, BY = 432, SX = 1.5, SY = 0.26;                // trunk base; where low sun throws things
+  const cast = by => `matrix(1,0,${-SX},${-SY},${n1(SX * by)},${n1(by * (1 + SY))})`;
+
+  // ---- the persimmon tree, grown rather than drawn
+  let segs = '', snow = '';
+  const tips = [];
+  (function limb(x, y, ang, len, w, depth) {
+    let a = ang;
+    for (let i = 0; i < 3; i++) {
+      a += (R() - 0.5) * 0.62;
+      a += (-Math.PI / 2 - a) * 0.1;                             // everything still leans toward the sky
+      const x1 = x + Math.cos(a) * len / 3, y1 = y + Math.sin(a) * len / 3, ww = w * (1 - 0.073 * i);
+      segs += `<path d="${d([[x, y], [x1, y1]])}" stroke-width="${n1(ww)}"/>`;
+      if (depth < 7 && ww > 2 && Math.abs(Math.cos(a)) > 0.6)
+        snow += `<path d="${d([[x, y - ww * 0.36], [x1, y1 - ww * 0.36]])}" stroke-width="${n1(ww * 0.52)}"/>`;
+      x = x1; y = y1;
+    }
+    if (depth <= 0) { tips.push([x, y]); return; }
+    const n = R() < 0.28 ? 3 : 2;
+    for (let k = 0; k < n; k++) {
+      const spread = (k - (n - 1) / 2) * (0.62 + R() * 0.4) + (R() - 0.5) * 0.36;
+      limb(x, y, a + spread, len * (0.66 + R() * 0.17), w * 0.66, depth - 1);
+    }
+  })(BX, BY, -Math.PI / 2 + 0.1, 104, 15, 7);
+  // the one fruit left on the tree: the tip that reaches furthest toward the ghost
+  const tip = tips.filter(t => t[1] > 150 && t[1] < 275).sort((p, q) => (q[0] - 0.4 * Math.abs(q[1] - 205)) - (p[0] - 0.4 * Math.abs(p[1] - 205)))[0] || tips[0];
+  const fx = tip[0] + 1, fy = tip[1] + 14;
+
+  // ---- far things
+  let ridge = 'M60,305';
+  for (let x = 60; x <= 742; x += 5) {
+    const clump = 7 * Math.exp(-Math.pow((x - 430) / 60, 2)) + 5 * Math.exp(-Math.pow((x - 610) / 90, 2));
+    ridge += `L${x},${n1(297 - 4 - 3 * Math.sin(x * 0.05) - 2.5 * Math.sin(x * 0.13 + 1) - R() * 3.5 - clump)}`;
+  }
+  ridge += 'L742,305Z';
+
+  const GHOST = 'M-20,0C-20,-16 -17,-55 0,-55C17,-55 20,-16 20,0Q15,-10 10,0Q5,-10 0,0Q-5,-10 -10,0Q-15,-10 -20,0Z';
+  const GX = 524, GY = 402, gT = `translate(${GX},${GY}) rotate(6)`;
+  const tint = '#f7f4ee';
+
+  const defs = `
+  <radialGradient id="skyG" gradientUnits="userSpaceOnUse" cx="128" cy="262" r="600">
+    <stop offset="0" stop-color="#fbd2a6"/><stop offset=".2" stop-color="#f3d9c6"/><stop offset=".55" stop-color="#cdd6e3"/><stop offset="1" stop-color="#b3c0d4"/>
+  </radialGradient>
+  <radialGradient id="halo" gradientUnits="userSpaceOnUse" cx="128" cy="258" r="70">
+    <stop offset=".2" stop-color="#ffb866" stop-opacity=".75"/><stop offset=".5" stop-color="#ffc98a" stop-opacity=".3"/><stop offset="1" stop-color="#ffd9a8" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="smokeG" gradientUnits="userSpaceOnUse" x1="0" y1="280" x2="0" y2="196"><stop offset="0" stop-color="#6c728a" stop-opacity="1"/><stop offset="1" stop-color="#7c8299" stop-opacity="0"/></linearGradient>
+  <clipPath id="inner"><rect x="${PX + 34}" y="${PY + 34}" width="${PW - 68}" height="${PH - 68}"/></clipPath>
+  <clipPath id="ghostClip"><path d="${GHOST}"/></clipPath>
+  <filter id="puff" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+  <filter id="drift" ${FU}><feGaussianBlur stdDeviation="16"/></filter>
+  <filter id="pressL" ${FU}>
+    <feColorMatrix in="SourceGraphic" type="luminanceToAlpha" result="la"/>
+    <feGaussianBlur in="la" stdDeviation="1" result="h"/>
+    <feDiffuseLighting in="h" surfaceScale="2.8" diffuseConstant="1" lighting-color="#ffffff"><feDistantLight azimuth="225" elevation="30"/></feDiffuseLighting>
+  </filter>
+  <mask id="snowMask" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">
+    <rect width="${W}" height="${H}" fill="#fff"/>
+    <g fill="none" stroke="#000" stroke-linecap="round" filter="url(#hand)">${snow}</g>
+  </mask>
+  <g id="tree" fill="none" stroke-linecap="round" stroke-linejoin="round">${segs}</g>`
+    + M.hand('hand', 14, 1.6, 0.05) + M.felt('ink', 31, 2.4) + M.pencil('pencil', 3, 2.8, -0.8)
+    + M.wash('wSky', 52, { scale: 26, freq: 0.008, rim: 11, edge: 0.5, pool: [2.3, -0.4], soft: 2 })
+    + M.wash('wHill', 61, { scale: 14, freq: 0.012, rim: 6, edge: 0.4, pool: [2, -0.45], soft: 3 })
+    + M.wash('wRidge', 67, { scale: 5, freq: 0.03, rim: 3, edge: 0.6, pool: [2.2, -0.35], soft: 1.5 })
+    + M.wash('wShade', 73, { scale: 7, freq: 0.02, rim: 3, edge: 0.45, pool: [1.8, -0.15], soft: 1.7 })
+    + M.wash('wFruit', 80, { scale: 2.5, freq: 0.06, rim: 2.2, edge: 0.8, pool: [2, 0.1], soft: 0.6 });
+
+  const body = `
+  <!-- pressure: the ghost raised, the name written in the snow, the snow itself barely rolling -->
+  <g style="mix-blend-mode:hard-light" clip-path="url(#sheetClip)" opacity=".9"><g filter="url(#pressL)">
+    <rect width="${W}" height="${H}" fill="#808080"/>
+    <g filter="url(#drift)"><ellipse cx="330" cy="372" rx="170" ry="16" fill="#8e8e8e"/><ellipse cx="610" cy="452" rx="150" ry="18" fill="#8c8c8c"/><ellipse cx="170" cy="492" rx="130" ry="14" fill="#747474"/><ellipse cx="${BX}" cy="${BY + 4}" rx="44" ry="9" fill="#929292"/></g>
+    <g transform="${gT}"><g clip-path="url(#ghostClip)"><path d="${GHOST}" fill="#fff" filter="url(#puff)"/></g></g>
+    <g transform="translate(78,452) scale(.82)" fill="none" stroke="#505050" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="${FOLD}"/><path d="${WORD}"/></g>
+  </g></g>
+  <!-- sky: one wash, warm where the sun is; the sun itself is paper -->
+  <g style="mix-blend-mode:multiply"><g filter="url(#wSky)">
+    <path d="M70,62C250,50 560,58 734,66L738,300C560,296 250,304 66,298ZM143,258a15,15 0 1 0 -30,0a15,15 0 1 0 30,0Z" fill="url(#skyG)" fill-rule="evenodd"/>
+    <path d="M198,258a70,70 0 1 0 -140,0a70,70 0 1 0 140,0ZM143,258a15,15 0 1 0 -30,0a15,15 0 1 0 30,0Z" fill="url(#halo)" fill-rule="evenodd"/>
+  </g></g>
+  <g style="mix-blend-mode:multiply">
+    <path d="M60,300C180,270 300,264 420,282C520,295 640,272 742,286L742,305L60,305Z" fill="#9aa5c2" filter="url(#wHill)"/>
+    <path d="${ridge}" fill="#5d6583" filter="url(#wRidge)"/>
+  </g>
+  <!-- a house, awake -->
+  <path d="M642,293l13,-10l13,10z" fill="${tint}"/>
+  <path d="M642,293l13,-10l13,10" fill="none" stroke="#8a90a8" stroke-width=".7"/>
+  <rect x="645.5" y="293" width="19" height="9" fill="#585d77"/><rect x="661" y="281" width="3" height="6" fill="#585d77"/>
+  <rect x="652" y="295" width="4.5" height="4.5" fill="#ffbf5a"/>
+  <path d="M662.5,280C660,266 667,256 663,242C660,230 666,221 664,198" fill="none" stroke="url(#smokeG)" stroke-width="2.2" stroke-linecap="round" filter="url(#pencil)"/>
+  <!-- shadows: the same tree and the same ghost, laid down across the snow by a matrix -->
+  <g style="mix-blend-mode:multiply" clip-path="url(#inner)">
+    <path d="M96,350C240,341 410,349 566,343C410,356 240,355 96,350Z" fill="#b9c5dd" filter="url(#wHill)"/>
+    <g filter="url(#wShade)"><use href="#tree" xlink:href="#tree" stroke="#7f8cc0" transform="${cast(BY)}"/></g>
+    <g filter="url(#wShade)" opacity=".5"><g transform="${cast(GY + 6)}"><path d="${GHOST}" transform="${gT}" fill="#7f8cc0"/></g></g>
+  </g>
+  <g style="mix-blend-mode:multiply" mask="url(#snowMask)"><g filter="url(#ink)" opacity=".93"><use href="#tree" xlink:href="#tree" stroke="#2b2726"/></g></g>
+  <!-- kimori-gaki: the last persimmon, left on the tree -->
+  <g style="mix-blend-mode:multiply">
+    <path d="M${n1(tip[0])},${n1(tip[1])}L${n1(fx)},${n1(fy - 8)}" stroke="#2b2726" stroke-width="1.1" fill="none"/>
+    <ellipse cx="${n1(fx)}" cy="${n1(fy)}" rx="10" ry="9" fill="#f59a1c" filter="url(#wFruit)"/>
+    <ellipse cx="${n1(fx + 2.2)}" cy="${n1(fy + 2)}" rx="7" ry="6.2" fill="#e4521a" filter="url(#wFruit)"/>
+    <ellipse cx="${n1(fx)}" cy="${n1(fy - 7.2)}" rx="4.6" ry="1.7" fill="#3f4a1e"/>
+  </g>
+  <path d="M${n1(fx - 6.5)},${n1(fy - 7.6)}c2,-5 11,-5 13,0c-3,1.6 -10,1.6 -13,0z" fill="${tint}"/>
+  <!-- the only marks the ghost gets -->
+  <g transform="${gT}" fill="#35322f" style="mix-blend-mode:multiply"><ellipse cx="-9" cy="-38" rx="2.2" ry="3"/><ellipse cx="1.5" cy="-40.2" rx="2.2" ry="3"/></g>`;
+  return frame({ title: 'a quiet winter morning', tint, seed: 50, body, defs });
+}
+
+const studies = { '01-hands': hands, '02-persimmons': persimmons, '03-egg': egg, '04-pressed': pressed, '05-lamp': lamp, '06-pond': pond, '07-winter-morning': winter };
 for (const [name, fn] of Object.entries(studies)) {
   const svg = fn();
   fs.writeFileSync(path.join(OUT, name + '.svg'), svg);
