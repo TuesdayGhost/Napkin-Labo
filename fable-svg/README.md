@@ -1,6 +1,6 @@
 # Fable · Napkin Lab · SVG
 
-Seven napkins, each a single standalone SVG file: paper, pigment and light all described in text.
+Nine napkins, each a single standalone SVG file: paper, pigment and light all described in text.
 
 | | |
 |---|---|
@@ -11,6 +11,8 @@ Seven napkins, each a single standalone SVG file: paper, pigment and light all d
 | `lab/05-lamp.svg` | Lamp, rain (animated) |
 | `lab/06-pond.svg` | Two stones, one pond (animated) |
 | `lab/07-winter-morning.svg` | The memory: a quiet winter morning |
+| `lab/08-one-line.svg` | After Mellan: a face on a napkin, in one line |
+| `lab/09-one-line-bend.svg` | After Mellan: the same face, by bending alone |
 
 - `index.html` is the lab page.
 - `node build.js` regenerates everything in `lab/`.

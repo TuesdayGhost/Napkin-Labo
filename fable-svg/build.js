@@ -577,7 +577,147 @@ function winter(o = {}) {
   return frame({ title: 'a quiet winter morning', tint, seed: 50, body, defs });
 }
 
-const studies = { '01-hands': hands, '02-persimmons': persimmons, '03-egg': egg, '04-pressed': pressed, '05-lamp': lamp, '06-pond': pond, '07-winter-morning': winter };
+// ================================================================== 08 after Mellan: a face on a napkin, in one line
+// Claude Mellan, 1649: a whole face engraved as a single spiral that starts at the tip of the nose.
+// Looking closely at it, the line carries two separate signals. Its WIDTH is light and shade.
+// Its sideways BEND is relief: the lettering in his cloth is not darker, the line just steps over it.
+// Here both are used: the ghost is swell, the name is bend. The ink is one closed outline of one line.
+function oneLine(o = {}) {
+  const CX = 400, CY = 276, R0 = 216, PITCH = o.pitch || 3.2, B = PITCH / (2 * Math.PI);
+  const BEND = !!o.bend, KG = o.kg == null ? (BEND ? 10 : 6) : o.kg, KW = o.kw == null ? 2.6 : o.kw, SHADE = BEND ? 0 : 0.42, G = 0.9;
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  // the ghost as a distance field; origin = the spiral's centre = where a nose would be
+  const sdf = (x, y) => {
+    x /= G; y /= G;
+    const d1 = Math.hypot(x, y + 36) - 86;
+    const hw = 86 + 10 * sstep(-36, 110, y);
+    const hem = 104 + 15 * Math.pow(Math.abs(Math.sin(Math.PI * x / 48)), 0.8);
+    return Math.min(d1, Math.max(Math.abs(x) - hw, y - hem, -36 - y)) * G;
+  };
+
+  // the name, flattened to segments, as a height field
+  const WS = 1.25, WY = 160, word = [];
+  {
+    const t = WORD.match(/[MCL]|-?\d+(?:\.\d+)?/g), P = (x, y) => [(x - 70) * WS, (y - 31) * WS + WY];
+    let i = 0, cur = null, cmd = 'M';
+    while (i < t.length) {
+      if (/[MCL]/.test(t[i])) cmd = t[i++];
+      if (cmd !== 'C') { const p = [+t[i++], +t[i++]]; if (cmd === 'L') word.push([P(...cur), P(...p)]); cur = p; continue; }
+      const a = cur, b = [+t[i++], +t[i++]], c = [+t[i++], +t[i++]], e = [+t[i++], +t[i++]];
+      let prev = a;
+      for (let k = 1; k <= 8; k++) {
+        const u = k / 8, v = 1 - u;
+        const p = [v * v * v * a[0] + 3 * v * v * u * b[0] + 3 * v * u * u * c[0] + u * u * u * e[0], v * v * v * a[1] + 3 * v * v * u * b[1] + 3 * v * u * u * c[1] + u * u * u * e[1]];
+        word.push([P(...prev), P(...p)]); prev = p;
+      }
+      cur = e;
+    }
+  }
+  const wb = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const [a, b] of word) for (const p of [a, b]) { wb[0] = Math.min(wb[0], p[0]); wb[1] = Math.min(wb[1], p[1]); wb[2] = Math.max(wb[2], p[0]); wb[3] = Math.max(wb[3], p[1]); }
+  const hWord = (x, y) => {
+    if (x < wb[0] - 8 || x > wb[2] + 8 || y < wb[1] - 8 || y > wb[3] + 8) return 0;
+    let best = 1e9;
+    for (const [a, b] of word) {
+      const vx = b[0] - a[0], vy = b[1] - a[1], l2 = vx * vx + vy * vy || 1e-9;
+      const u = clamp(((x - a[0]) * vx + (y - a[1]) * vy) / l2, 0, 1);
+      const dd = (x - a[0] - vx * u) ** 2 + (y - a[1] - vy * u) ** 2;
+      if (dd < best) best = dd;
+    }
+    return sstep(5, 1.4, Math.sqrt(best));
+  };
+  // the same ghost as height instead of tone: a low dome, with the eyes and mouth as dimples
+  const height = (x, y) => {
+    const dome = sstep(0, -26, sdf(x, y));
+    if (!BEND) return dome;
+    let pit = 0;
+    for (const ex of [-30 * G, 30 * G]) pit = Math.max(pit, 0.92 * sstep(1.3, 0.15, Math.hypot((x - ex) / (12 * G), (y + 36 * G) / (17 * G))));
+    const my = y - 2 * G;
+    pit = Math.max(pit, 0.4 * sstep(0.95, 0.5, Math.abs(Math.atan2(my, x) - Math.PI / 2)) * sstep(6, 1, Math.abs(Math.hypot(x, my) - 16 * G)));
+    return dome * (1 - pit);
+  };
+
+  const tone = (x, y) => {
+    const d = sdf(x, y), r = Math.hypot(x, y);
+    let t;
+    if (d < 0) {
+      const s = sstep(-34, 0, sdf(x + 10, y + 8));
+      t = 0.035 + 0.34 * s * s;                                            // the sheet turning away from the light
+      t += 0.1 * sstep(30, 100, y) * (0.5 + 0.5 * Math.cos(2 * Math.PI * x / (48 * G)));   // folds rising from the hem
+      t += 0.09 * (Math.exp(-((x - 50 * G) ** 2 + (y + 6 * G) ** 2) / 170) + Math.exp(-((x + 50 * G) ** 2 + (y + 6 * G) ** 2) / 170));
+      for (const ex of [-30 * G, 30 * G]) {
+        const e = Math.hypot((x - ex) / (12 * G), (y + 36 * G) / (17 * G));
+        const glint = sstep(3.2 * G, 4.8 * G, Math.hypot(x - ex + 4 * G, y + 43 * G));
+        t = lerp(t, 0.97, sstep(1.1, 0.9, e) * glint);
+      }
+      const my = y - 2 * G, mr = Math.hypot(x, my), ma = Math.atan2(my, x);
+      t = lerp(t, 0.9, sstep(0.78, 0.6, Math.abs(ma - Math.PI / 2)) * sstep(2.7, 1.3, Math.abs(mr - 16 * G)));
+    } else {
+      t = 0.55 + 0.32 * sstep(30, 0, sdf(x - 14, y - 12));                 // its shadow on the cloth
+      t *= 1 - 0.62 * sstep(R0 * 0.7, R0, r);
+    }
+    t += SHADE * (hWord(x - 1.4, y - 1.4) - hWord(x + 1.4, y + 1.4));        // the name catches the light like a ridge
+    return clamp(t, 0, 1);
+  };
+
+  // ---- walk the spiral once
+  const S = [], thMax = 2 * Math.PI * R0 / PITCH;
+  for (let th = 0; th < thMax;) {
+    const r = B * th, c = Math.cos(th), s = Math.sin(th);
+    const tx = B * c - r * s, ty = B * s + r * c, tl = Math.hypot(tx, ty) || 1, nx = ty / tl, ny = -tx / tl;
+    const push = -KG * (1 - height(r * c, r * s));                   // the cloth lies lower than the ghost
+    const qx = r * c + nx * push, bend = KW * hWord(qx, r * s + ny * push), qy = r * s + ny * push - bend;
+    const taper = 0.2 + 0.8 * sstep(thMax, thMax - 4 * Math.PI, th);
+    const w = (BEND ? 0.85 : 0.32 + (PITCH * 0.9 - 0.32) * tone(qx, qy)) * taper;
+    S.push({ x: qx, y: qy, nx, ny, w, r, f: w + 0.6 * bend + 0.3 * push });
+    th += Math.min(1.5, 0.3 + r * 0.2) / Math.hypot(r, B);
+  }
+  // a burin cannot change its mind instantly: let the width swell and taper over a few pixels
+  { const w0 = S.map(p => p.w), g = [1, 4, 6, 4, 1];
+    for (let i = 2; i < S.length - 2; i++) { let a = 0; for (let k = -2; k <= 2; k++) a += w0[i + k] * g[k + 2]; S[i].w = a / 16; S[i].f += S[i].w - w0[i]; } }
+  // keep every sample where something is changing; elsewhere only as many as the curve needs
+  const K = [S[0]];
+  for (let i = 1; i < S.length - 1; i++) {
+    const a = S[i], last = K[K.length - 1], gap = Math.hypot(a.x - last.x, a.y - last.y);
+    const busy = Math.abs(a.f - S[i - 1].f) > 0.05 || Math.abs(S[i + 1].f - a.f) > 0.05;
+    if (busy || gap > Math.min(6, 0.3 + 0.45 * Math.sqrt(a.r)) || Math.abs(a.f - last.f) > 0.1) K.push(a);
+  }
+  K.push(S[S.length - 1]);
+  const ring = K.map(p => [CX + p.x + p.nx * p.w / 2, CY + p.y + p.ny * p.w / 2])
+    .concat(K.slice().reverse().map(p => [CX + p.x - p.nx * p.w / 2, CY + p.y - p.ny * p.w / 2]));
+  const num = v => { let s = v.toFixed(1).replace(/\.0$/, ''); if (s === '-0') s = '0'; return s.replace(/^(-?)0\./, '$1.'); };
+  let px = n1(ring[0][0]), py = n1(ring[0][1]), dd = `M${px},${py}l`, first = true;
+  for (let i = 1; i < ring.length; i++) {
+    const dx = n1(ring[i][0] - px), dy = n1(ring[i][1] - py);
+    if (dx === 0 && dy === 0) continue;
+    px = n1(px + dx); py = n1(py + dy);
+    const a = num(dx), b = num(dy);
+    dd += (first || a[0] === '-' ? '' : ' ') + a + (b[0] === '-' ? '' : ' ') + b; first = false;
+  }
+  dd += 'z';
+
+  const plate = `x="172" y="50" width="456" height="454" rx="3"`;
+  const defs = `
+  <filter id="pressL" ${FU}>
+    <feColorMatrix in="SourceGraphic" type="luminanceToAlpha" result="la"/>
+    <feGaussianBlur in="la" stdDeviation=".9" result="h"/>
+    <feDiffuseLighting in="h" surfaceScale="3" diffuseConstant="1" lighting-color="#ffffff"><feDistantLight azimuth="225" elevation="30"/></feDiffuseLighting>
+  </filter>`;
+  const body = `
+  <!-- the plate mark: the whole print sits a little lower than the napkin; the folded corner is pressed, not inked -->
+  <g style="mix-blend-mode:hard-light" clip-path="url(#sheetClip)" opacity=".9"><g filter="url(#pressL)">
+    <rect width="${W}" height="${H}" fill="#808080"/>
+    <rect ${plate} fill="#727272"/>
+    <g transform="translate(594,462) scale(1.5)" fill="none" stroke="#3a3a3a" stroke-width="1.6" stroke-linejoin="round"><path d="${FOLD}" transform="translate(-1,-31)"/></g>
+  </g></g>
+  <rect ${plate} fill="#cdb98e" opacity=".17" style="mix-blend-mode:multiply"/>
+  <!-- one line: ${K.length} points along ${Math.round(thMax / (2 * Math.PI))} turns, drawn as a single closed outline -->
+  <path d="${dd}" fill="#1b1816" opacity=".94" style="mix-blend-mode:multiply"/>`;
+  return frame({ title: BEND ? 'after Mellan: the same face, by bending alone' : 'after Mellan: a face on a napkin, in one line', seed: BEND ? 62 : 61, body, defs });
+}
+
+const studies = { '01-hands': hands, '02-persimmons': persimmons, '03-egg': egg, '04-pressed': pressed, '05-lamp': lamp, '06-pond': pond, '07-winter-morning': winter, '08-one-line': oneLine, '09-one-line-bend': () => oneLine({ bend: true }) };
 for (const [name, fn] of Object.entries(studies)) {
   const svg = fn();
   fs.writeFileSync(path.join(OUT, name + '.svg'), svg);
