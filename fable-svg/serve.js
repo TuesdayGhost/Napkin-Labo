@@ -1,7 +1,7 @@
 // node serve.js [port]  ->  http://localhost:4311  (static files from this folder)
 'use strict';
 const http = require('http'), fs = require('fs'), path = require('path');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.svg': 'image/svg+xml', '.js': 'text/javascript', '.png': 'image/png' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.svg': 'image/svg+xml', '.js': 'text/javascript', '.png': 'image/png', '.md': 'text/plain; charset=utf-8' };
 const PORT = +process.argv[2] || +process.env.PORT || 4311;
 http.createServer((req, res) => {
   const rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html';

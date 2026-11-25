@@ -135,6 +135,33 @@ ${body}
 </svg>
 `;
 }
+// ------------------------------------------------------------------ tools
+// The smallest way I know to write a long polyline: one absolute start, then relative steps at 0.1 precision,
+// tracking the rounded pen position so the error never accumulates.
+function compactPath(ring, close = true) {
+  const num = v => { let s = v.toFixed(1).replace(/\.0$/, ''); if (s === '-0') s = '0'; return s.replace(/^(-?)0\./, '$1.'); };
+  let px = n1(ring[0][0]), py = n1(ring[0][1]), dd = `M${px},${py}l`, first = true;
+  for (let i = 1; i < ring.length; i++) {
+    const dx = n1(ring[i][0] - px), dy = n1(ring[i][1] - py);
+    if (dx === 0 && dy === 0) continue;
+    px = n1(px + dx); py = n1(py + dy);
+    const a = num(dx), b = num(dy);
+    dd += (first || a[0] === '-' ? '' : ' ') + a + (b[0] === '-' ? '' : ' ') + b; first = false;
+  }
+  return first ? '' : dd + (close ? 'z' : '');
+}
+// SVG has no stroke whose width changes along its length. ribbon() is one: give it a centreline and a width
+// for every point (a number, an array, or a function of i/(n-1)); get back the outline of the swelling line.
+function ribbon(pts, width) {
+  const n = pts.length, wAt = i => typeof width === 'function' ? width(i / (n - 1), i) : Array.isArray(width) ? width[i] : width;
+  const L = [], Rr = [];
+  for (let i = 0; i < n; i++) {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    const nx = (b[1] - a[1]) / l, ny = -(b[0] - a[0]) / l, h = wAt(i) / 2;
+    L.push([pts[i][0] + nx * h, pts[i][1] + ny * h]); Rr.push([pts[i][0] - nx * h, pts[i][1] - ny * h]);
+  }
+  return compactPath(L.concat(Rr.reverse()));
+}
 const label = (x, y, t, fill = '#8d8474', extra = '') =>
   `<text x="${x}" y="${y}" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="12" fill="${fill}" ${extra}>${t}</text>`;
 
@@ -584,7 +611,7 @@ function winter(o = {}) {
 // Here both are used: the ghost is swell, the name is bend. The ink is one closed outline of one line.
 function oneLine(o = {}) {
   const CX = 400, CY = 276, R0 = 216, PITCH = o.pitch || 3.2, B = PITCH / (2 * Math.PI);
-  const BEND = !!o.bend, KG = o.kg == null ? (BEND ? 10 : 6) : o.kg, KW = o.kw == null ? 2.6 : o.kw, SHADE = BEND ? 0 : 0.42, G = 0.9;
+  const SPACE = !!o.space, BEND = !!o.bend, KG = o.kg == null ? (BEND ? 10 : 6) : o.kg, KW = o.kw == null ? 2.6 : o.kw, SHADE = BEND || o.space ? 0 : 0.42, G = 0.9;
   const lerp = (a, b, t) => a + (b - a) * t;
 
   // the ghost as a distance field; origin = the spiral's centre = where a nose would be
@@ -658,12 +685,44 @@ function oneLine(o = {}) {
       t *= 1 - 0.62 * sstep(R0 * 0.7, R0, r);
     }
     t += SHADE * (hWord(x - 1.4, y - 1.4) - hWord(x + 1.4, y + 1.4));        // the name catches the light like a ridge
+    if (SPACE) t = Math.max(t, 0.92 * hWord(x, y));
     return clamp(t, 0, 1);
   };
 
   // ---- walk the spiral once
   const S = [], thMax = 2 * Math.PI * R0 / PITCH;
-  for (let th = 0; th < thMax;) {
+  if (SPACE) {
+    // Third channel: neither width nor bend, only how close the turns lie. Along every ray from the centre,
+    // integrate "turns per pixel" (more where the picture is dark); the line is where that count equals the angle.
+    const NT = 900, DR = 0.5, NR = Math.round(R0 / DR), sp = t => lerp(6.4, 1.55, Math.pow(t, 0.75));
+    let phi = [];
+    for (let j = 0; j < NT; j++) {
+      const a = 2 * Math.PI * j / NT, c = Math.cos(a), s = Math.sin(a), row = new Float64Array(NR + 1);
+      for (let k = 1; k <= NR; k++) row[k] = row[k - 1] + DR / sp(tone((k - 0.5) * DR * c, (k - 0.5) * DR * s));
+      phi.push(row);
+    }
+    for (let pass = 0; pass < (o.blur == null ? 3 : o.blur); pass++)       // let neighbouring rays agree a little
+      phi = phi.map((row, j) => row.map((v, k) => (phi[(j + NT - 1) % NT][k] + 2 * v + phi[(j + 1) % NT][k]) / 4));
+    const turns = phi.reduce((a, row) => a + row[NR], 0) / NT;
+    for (const row of phi) { const kf = turns / row[NR]; for (let k = 0; k <= NR; k++) row[k] *= kf; }   // every ray ends on the rim
+    const at = (j, u, k) => lerp(phi[j][k], phi[(j + 1) % NT][k], u);
+    const TH = 2 * Math.PI * turns;
+    for (let th = 0, r = 0; th < TH;) {
+      const a = th % (2 * Math.PI), jf = a / (2 * Math.PI) * NT, j = Math.floor(jf) % NT, u = jf - Math.floor(jf), target = th / (2 * Math.PI);
+      let lo = 0, hi = NR;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (at(j, u, m) < target) lo = m; else hi = m; }
+      const v0 = at(j, u, lo), v1 = at(j, u, hi);
+      r = (lo + (v1 > v0 ? (target - v0) / (v1 - v0) : 0)) * DR;
+      S.push({ x: r * Math.cos(a), y: r * Math.sin(a), nx: 0, ny: 0, w: 0.8 * (0.25 + 0.75 * sstep(TH, TH - 4 * Math.PI, th)), r, f: r * 0.5 });
+      th += Math.min(1.2, 0.3 + r * 0.2) / Math.max(r, 0.5);
+    }
+    for (let i = 0; i < S.length; i++) {
+      const a = S[Math.max(0, i - 1)], b = S[Math.min(S.length - 1, i + 1)], l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      S[i].nx = (b.y - a.y) / l; S[i].ny = -(b.x - a.x) / l;
+    }
+    oneLine.lastTurns = turns;
+  }
+  for (let th = 0; th < thMax && !SPACE;) {
     const r = B * th, c = Math.cos(th), s = Math.sin(th);
     const tx = B * c - r * s, ty = B * s + r * c, tl = Math.hypot(tx, ty) || 1, nx = ty / tl, ny = -tx / tl;
     const push = -KG * (1 - height(r * c, r * s));                   // the cloth lies lower than the ghost
@@ -686,16 +745,7 @@ function oneLine(o = {}) {
   K.push(S[S.length - 1]);
   const ring = K.map(p => [CX + p.x + p.nx * p.w / 2, CY + p.y + p.ny * p.w / 2])
     .concat(K.slice().reverse().map(p => [CX + p.x - p.nx * p.w / 2, CY + p.y - p.ny * p.w / 2]));
-  const num = v => { let s = v.toFixed(1).replace(/\.0$/, ''); if (s === '-0') s = '0'; return s.replace(/^(-?)0\./, '$1.'); };
-  let px = n1(ring[0][0]), py = n1(ring[0][1]), dd = `M${px},${py}l`, first = true;
-  for (let i = 1; i < ring.length; i++) {
-    const dx = n1(ring[i][0] - px), dy = n1(ring[i][1] - py);
-    if (dx === 0 && dy === 0) continue;
-    px = n1(px + dx); py = n1(py + dy);
-    const a = num(dx), b = num(dy);
-    dd += (first || a[0] === '-' ? '' : ' ') + a + (b[0] === '-' ? '' : ' ') + b; first = false;
-  }
-  dd += 'z';
+  const dd = compactPath(ring);
 
   const plate = `x="172" y="50" width="456" height="454" rx="3"`;
   const defs = `
@@ -712,12 +762,103 @@ function oneLine(o = {}) {
     <g transform="translate(594,462) scale(1.5)" fill="none" stroke="#3a3a3a" stroke-width="1.6" stroke-linejoin="round"><path d="${FOLD}" transform="translate(-1,-31)"/></g>
   </g></g>
   <rect ${plate} fill="#cdb98e" opacity=".17" style="mix-blend-mode:multiply"/>
-  <!-- one line: ${K.length} points along ${Math.round(thMax / (2 * Math.PI))} turns, drawn as a single closed outline -->
+  <!-- one line: ${K.length} points along ${Math.round(SPACE ? oneLine.lastTurns : thMax / (2 * Math.PI))} turns, drawn as a single closed outline -->
   <path d="${dd}" fill="#1b1816" opacity=".94" style="mix-blend-mode:multiply"/>`;
-  return frame({ title: BEND ? 'after Mellan: the same face, by bending alone' : 'after Mellan: a face on a napkin, in one line', seed: BEND ? 62 : 61, body, defs });
+  return frame({ title: SPACE ? 'after Mellan: the same face, by spacing alone (a failure worth keeping)' : BEND ? 'after Mellan: the same face, by bending alone' : 'after Mellan: a face on a napkin, in one line', seed: SPACE ? 63 : BEND ? 62 : 61, body, defs });
 }
 
-const studies = { '01-hands': hands, '02-persimmons': persimmons, '03-egg': egg, '04-pressed': pressed, '05-lamp': lamp, '06-pond': pond, '07-winter-morning': winter, '08-one-line': oneLine, '09-one-line-bend': () => oneLine({ bend: true }) };
+// ================================================================== 10 ginkgo, corrected
+// Napkin 04 drew the ginkgo's veins as straight rays from the stalk. A real leaf does something else:
+// two strands enter, and every vein after that is a fork of an older one. None rejoin (or almost none).
+// growVeins() is that rule and nothing more: march outward; when two neighbours drift too far apart,
+// one of them forks into the gap; neighbours keep nudging each other toward even spacing.
+function growVeins({ RR, sMax, margin, lo, hi, R, dr = 1.25, young = 10, keep = 3 }) {
+  const rad = t => t * Math.PI / 180;
+  const cool = () => young * (0.5 + 1.1 * R());                              // forks should not all happen in rows
+  const V = [{ th: lo(4) + 0.6, age: 99, cool: 0, pts: [], dead: false }, { th: hi(4) - 0.6, age: 99, cool: 0, pts: [], dead: false }];
+  const all = V.slice();
+  let forks = 0, step = 0;
+  for (let r = 4; r < RR * 1.1; r += dr, step++) {
+    V[0].th = lo(r) + 0.6; V[V.length - 1].th = hi(r) - 0.6;               // the outermost veins are the leaf's lower edges
+    for (let it = 0; it < 2; it++) for (let i = 1; i < V.length - 1; i++) V[i].th += 0.35 * ((V[i - 1].th + V[i + 1].th) / 2 - V[i].th);
+    for (let i = 0; i < V.length - 1; i++) {
+      const a = V[i], b = V[i + 1];
+      if (r * rad(b.th - a.th) <= sMax || a.age <= a.cool || b.age <= b.cool) continue;
+      const fromA = R() < 0.5, p = fromA ? a : b, th = p.th + (fromA ? 1 : -1) * (b.th - a.th) * 0.1;
+      if (p.dead || r > margin(th) - 8) continue;
+      p.pts.push([r, p.th]);
+      const c = { th, age: 0, cool: cool(), pts: [[r, p.th]], dead: false };
+      V.splice(i + 1, 0, c); all.push(c); p.age = 0; p.cool = cool(); forks++; i++;
+    }
+    for (const v of V) {
+      v.age++;
+      if (v.dead) continue;
+      const m = margin(v.th);
+      if (r >= m) { v.dead = true; v.pts.push([m, v.th]); } else if (step % keep === 0) v.pts.push([r, v.th]);
+    }
+  }
+  return { veins: all.filter(v => v.pts.length > 1), forks };
+}
+function ginkgo() {
+  const R = rng(7), rad = t => t * Math.PI / 180;
+  const fan = RR => {
+    const t0 = 203, t1 = 337, mid = 270;
+    const margin = t => RR * (1 + 0.028 * Math.sin(rad(t) * 11 + 0.4) + 0.016 * Math.sin(rad(t) * 27 + 1) + 0.008 * Math.sin(rad(t) * 61)
+      - 0.36 * Math.exp(-Math.pow((t - mid - 2) / 2.6, 2)) - 0.1 * Math.pow(Math.abs(t - mid) / 67, 3));
+    const pinch = r => 14 * Math.pow(1 - Math.min(1, r / RR), 2);          // the base narrows to a wedge
+    return { RR, t0, t1, margin, lo: r => t0 + pinch(r), hi: r => t1 - pinch(r) };
+  };
+  const xy = ([r, t]) => [r * Math.cos(rad(t)), r * Math.sin(rad(t))];
+  const outline = f => {
+    const p = [[0, 0]];
+    const rEdge = t => { let r = f.RR * 0.5; for (let k = 0; k < 30; k++) r = f.margin(t === 'lo' ? f.lo(r) : f.hi(r)); return r; };
+    const rl = rEdge('lo'), rh = rEdge('hi');
+    for (let r = 3; r < rl; r += 4) p.push(xy([r, f.lo(r)]));
+    for (let t = f.lo(rl); t <= f.hi(rh); t += 0.75) p.push(xy([f.margin(t), t]));
+    for (let r = rh; r > 3; r -= 4) p.push(xy([r, f.hi(r)]));
+    return compactPath(p);
+  };
+
+  const F = fan(250), big = growVeins({ ...F, sMax: 5.2, R });
+  const veins = big.veins.map(v => ribbon(v.pts.map(xy), (u, i) => 0.42 + 0.95 * Math.pow(1 - Math.min(1, v.pts[i][0] / F.RR), 1.5))).join('');
+  const blade = outline(F);
+  // the record, drawn small: what 04 did, and what the rule does
+  const f2 = fan(50), small = growVeins({ ...f2, sMax: 5.4, R, dr: 0.5, young: 8, keep: 2 });
+  let rays = '';
+  for (let t = f2.t0 + 3; t <= f2.t1 - 3; t += 6.7) rays += `M0,0L${xy([f2.margin(t) * 0.98, t]).map(n1)}`;
+  const forksSmall = small.veins.map(v => 'M' + v.pts.map(q => xy(q).map(n1)).join('L')).join('');
+  const stalk = [[0, 0], [5, 26], [4, 54], [10, 82], [20, 112]];
+  const P = `translate(318,404) rotate(-11)`;
+  const defs = M.hand('hand', 12, 1.1, 0.05) + M.pencil('pencil', 3, 2.8, -0.75)
+    + M.wash('w1', 15, { scale: 9, freq: 0.014, rim: 7, edge: 0.75, pool: [2.6, -0.5], soft: 1.2 })
+    + M.wash('w2', 27, { scale: 30, freq: 0.012, rim: 10, edge: 0.4, pool: [3.4, -1.2], soft: 5 })
+    + M.wash('w3', 39, { scale: 18, freq: 0.02, rim: 9, edge: 0.25, pool: [2.6, -0.8], soft: 8 });
+  const mini = (x, y, d, cap) => `<g transform="translate(${x},${y})"><path d="${outline(f2)}" stroke-width=".8"/><path d="${d}" stroke-width=".7"/><path d="M1,0C2,7 1,13 4,20" stroke-width="1.2"/></g>`
+    ;
+  const body = `
+  <g style="mix-blend-mode:multiply">
+    <g filter="url(#w1)"><g transform="${P}"><path d="${blade}" fill="#f1c12a"/><path d="${ribbon(stalk, u => 4.4 - 1.6 * u + 2.2 * u * u)}" fill="#cfae2c"/></g></g>
+    <g filter="url(#w2)"><g transform="${P}"><path d="${blade}" fill="#e39614" transform="translate(0,-60) scale(.72)"/></g></g>
+    <g filter="url(#w3)" opacity=".55"><g transform="${P}"><path d="${outline(fan(84))}" fill="#9aa838"/></g></g>
+  </g>
+  <g style="mix-blend-mode:multiply" filter="url(#hand)" opacity=".88"><g transform="${P}" fill="#4b3814">
+    <path d="${veins}"/>
+    <path d="${ribbon(stalk.map(([x, y]) => [x - 2, y]), u => 0.9 + 0.5 * u)}"/><path d="${ribbon(stalk.map(([x, y]) => [x + 2, y]), u => 0.9 + 0.5 * u)}"/>
+    <path d="${blade}" fill="none" stroke="#4b3814" stroke-width=".7" stroke-linejoin="round"/>
+  </g></g>
+  <g style="mix-blend-mode:multiply" fill="none" stroke="#4a4744" stroke-linecap="round" stroke-linejoin="round" filter="url(#pencil)">
+    ${mini(650, 196, rays, '04 · as I drew it')}
+    ${mini(650, 316, forksSmall, '10 · as it grows')}
+    ${sign(588, 440, 0.78, 'stroke="#4b3814" stroke-width="1.5"')}
+  </g>
+  ${label(650, 234, '04 · as I drew it', '#8d8474', 'text-anchor="middle"')}
+  ${label(650, 354, '10 · as it grows', '#8d8474', 'text-anchor="middle"')}
+  ${label(650, 382, `2 strands in, ${big.forks} forks,`, '#8d8474', 'text-anchor="middle"')}
+  ${label(650, 398, `${big.forks + 2} veins, none rejoin`, '#8d8474', 'text-anchor="middle"')}`;
+  return frame({ title: 'ginkgo, corrected', seed: 71, body, defs });
+}
+
+const studies = { '01-hands': hands, '02-persimmons': persimmons, '03-egg': egg, '04-pressed': pressed, '05-lamp': lamp, '06-pond': pond, '07-winter-morning': winter, '08-one-line': oneLine, '09-one-line-bend': () => oneLine({ bend: true }), '10-ginkgo-grown': ginkgo, '11-one-line-spacing': () => oneLine({ space: true }) };
 for (const [name, fn] of Object.entries(studies)) {
   const svg = fn();
   fs.writeFileSync(path.join(OUT, name + '.svg'), svg);
